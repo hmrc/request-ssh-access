@@ -66,9 +66,16 @@ def main():
     prompt = "LDAP password for '{env}': ".format(env=args.environment)
     ldap_password = getpass.getpass(prompt=prompt)
 
-    unwrapped_cert = vault_unwrap(
-        vault_login(get_aws_user_name(), ldap_password), get_wrapped_secret_from_sqs()
-    )
+    try:
+        unwrapped_cert = vault_unwrap(
+            args.environment,
+            vault_login(args.environment, get_aws_user_name(), ldap_password),
+            get_wrapped_secret_from_sqs(),
+        )
+    except:
+        print("oops, unwrapping failed, exiting")
+        exit(1)
+        return
 
     write_cert_to_file(args.output_ssh_cert, unwrapped_cert)
 
@@ -100,33 +107,35 @@ def print_lambda_command_to_copy():
     )
 
 
-def vault_login(ldap_user_name, ldap_password):
-    url = "https://vault.tools.development.tax.service.gov.uk/v1/auth/ldap/login/{ldap_user_name}".format(
-        ldap_user_name=ldap_user_name
+def vault_login(environment, ldap_user_name, ldap_password):
+    url = "https://vault.tools.{}.tax.service.gov.uk/v1/auth/ldap/login/{}".format(
+        environment, ldap_user_name
     )
-    logger.info("trying to log in with user={}".format(ldap_user_name))
     payload = {"password": ldap_password}
     response = requests.post(url, json=payload)
     logger.debug("login response {} {}".format(response.status_code, response.text))
 
-    return response.json()["auth"]["client_token"]
+    client_token = response.json()["auth"]["client_token"]
+    if client_token:
+        logger.info("logged in to vault with user={}".format(ldap_user_name))
+    return client_token
 
 
-def vault_unwrap(vault_token, wrapped_token):
-    url = "https://vault.tools.development.tax.service.gov.uk/v1/sys/wrapping/unwrap"
+def vault_unwrap(environment, vault_token, wrapped_token):
+    url = "https://vault.tools.{}.tax.service.gov.uk/v1/sys/wrapping/unwrap".format(
+        environment
+    )
 
     payload = {"token": wrapped_token}
     headers = {"X-Vault-Token": vault_token}
 
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        logger.debug("{} {}".format(response.status_code, response.text))
-
-        return response.json()["data"]["signed_key"]
-    except KeyError:
-        logger.warn(
-            "error while unwrapping the certificate, perhaps the token is expired?"
-        )
+    response = requests.post(url, json=payload, headers=headers)
+    logger.debug("{} {}".format(response.status_code, response.text))
+    errors = response.json()["errors"]
+    if errors:
+        logger.error(" ; ".join(errors))
+        raise Exception(str(errors))
+    return response.json()["data"]["signed_key"]
 
 
 def get_wrapped_secret_from_sqs():
