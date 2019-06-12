@@ -2,7 +2,7 @@
 
 """
 TODO:
-- SQS/S3 integration - read the token from the user's queue
+- SQS/S3/Lambda integration - read the token from the user's queue
 - Check for wrapped tokens on the user's queue at startup.
 - Error handling for Everything
 """
@@ -10,35 +10,26 @@ TODO:
 import argparse
 import getpass
 import logging
-import os
 
-import boto3
 import requests
 
+from mfa_session import MFASession
+import config
+
 logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s %(levelname)-5s %(message)s"
+    level=logging.WARN, format="%(asctime)s %(levelname)-5s %(message)s"
 )
 logger = logging.getLogger(__name__)
-
-webops_users = boto3.session.Session(profile_name="webops-users")
-iam = webops_users.client("iam")
-
-COMMAND_TEMPLATE = """
-Here's the command to copy and paste:
-aws lambda do-it --user-name={user_name} --public-key="{public_key}" --ttl={ttl}
-"""
-
-DEFAULT_TTL = 60 * 60 * 8  # 8 hours
-DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
+logging.getLogger("boto").setLevel(logging.WARN)
 
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Utility that will help with generating signed ssh certificates to use to login onto EC2"
+        description="Helper utility to create Vault-signed SSH certificates"
     )
     parser.add_argument(
         "--environment",
-        help="Environment to run against",
+        help="Environment to run in",
         type=str,
         required=True,
         choices=[
@@ -53,56 +44,51 @@ def main():
     parser.add_argument(
         "--output-ssh-cert",
         help="Path to write signed certificate (default: '{}')".format(
-            DEFAULT_CERT_PATH
+            config.DEFAULT_CERT_PATH
         ),
-        default=DEFAULT_CERT_PATH,
+        default=config.DEFAULT_CERT_PATH,
         type=str,
     )
 
     args = parser.parse_args()
 
-    print_lambda_command_to_copy()
+    session = MFASession(profile_name="webops-users")
+    session.mfa_login()
+
+    print_lambda_command_to_copy(session)
+
+    input("Press Enter to continue...")
 
     prompt = "LDAP password for '{env}': ".format(env=args.environment)
     ldap_password = getpass.getpass(prompt=prompt)
-
     try:
         unwrapped_cert = vault_unwrap(
             args.environment,
-            vault_login(args.environment, get_aws_user_name(), ldap_password),
+            vault_login(args.environment, session.user_name, ldap_password),
             get_wrapped_secret_from_sqs(),
         )
     except:
         print("oops, unwrapping failed, exiting")
-        exit(1)
-        return
+        raise
 
     write_cert_to_file(args.output_ssh_cert, unwrapped_cert)
 
 
-def get_aws_user_name():
-    return iam.get_user()["User"]["UserName"]
-
-
-def print_lambda_command_to_copy():
-    iam = webops_users.client("iam")
-    user_name = get_aws_user_name()
-    ssh_keys = iam.list_ssh_public_keys(UserName=user_name)
+def print_lambda_command_to_copy(session):
+    ssh_keys = session.session.client("iam").list_ssh_public_keys(
+        UserName=session.user_name
+    )
     ssh_keys = [k for k in ssh_keys["SSHPublicKeys"] if k["Status"] == "Active"]
     ssh_key_id = ssh_keys.pop()["SSHPublicKeyId"]
 
-    try:
-        response = iam.get_ssh_public_key(
-            UserName=user_name, SSHPublicKeyId=ssh_key_id, Encoding="SSH"
-        )
-        public_key = response.get["SSHPublicKey"]["SSHPublicKeyBody"]
-    except:
-        logger.warn("ugh")
-        public_key = "ssh-rsa XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-    logger.info(public_key)
+    response = session.session.client("iam").get_ssh_public_key(
+        UserName=session.user_name, SSHPublicKeyId=ssh_key_id, Encoding="SSH"
+    )
+    public_key = response["SSHPublicKey"]["SSHPublicKeyBody"]
+
     print(
-        COMMAND_TEMPLATE.format(
-            user_name=user_name, public_key=public_key, ttl=DEFAULT_TTL
+        config.COMMAND_TEMPLATE.format(
+            user_name=session.user_name, public_key=public_key, ttl=config.DEFAULT_TTL
         )
     )
 
@@ -131,20 +117,20 @@ def vault_unwrap(environment, vault_token, wrapped_token):
 
     response = requests.post(url, json=payload, headers=headers)
     logger.debug("{} {}".format(response.status_code, response.text))
-    errors = response.json()["errors"]
+    errors = response.json().get("errors", [])
     if errors:
-        logger.error(" ; ".join(errors))
         raise Exception(str(errors))
     return response.json()["data"]["signed_key"]
 
 
 def get_wrapped_secret_from_sqs():
-    return "s.CMIPnk3wZS8kdWeKYBlYR5fM"
+    return config.TEMPORARY_TOKEN
 
 
 def write_cert_to_file(output_ssh_cert, unwrapped_cert):
     with open(output_ssh_cert, "w") as f:
         f.write(unwrapped_cert)
+    print("signed certificate written to {}".format(output_ssh_cert))
 
 
 if __name__ == "__main__":
