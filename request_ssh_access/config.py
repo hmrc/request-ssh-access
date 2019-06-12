@@ -7,4 +7,4 @@ Here's the command to copy and paste:
 
 DEFAULT_TTL = 60 * 60 * 8  # 8 hours
 DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
-TEMPORARY_TOKEN = "s.XZJOeSy8QJqyvF068obVbhMd"
+TEMPORARY_TOKEN = "s.mpFPfSSRNnCj2VVUbSfOhTj3"
