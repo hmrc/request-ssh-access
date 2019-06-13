@@ -1,7 +1,7 @@
 
 # request-ssh-access
 
-This is a placeholder README.md for a new repository
+- The ssh certificate output file will be overwritten.
 
 ### License
 

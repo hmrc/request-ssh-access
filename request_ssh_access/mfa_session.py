@@ -1,8 +1,12 @@
 import getpass
+import json
 
 import boto3
 
 import config
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MFASession:
@@ -30,3 +34,15 @@ class MFASession:
             aws_access_key_id=credentials["AccessKeyId"],
             aws_secret_access_key=credentials["SecretAccessKey"],
         )
+
+    def assume_role(self):
+        response = self.session.client("sts").assume_role(
+            RoleArn="arn:aws:iam::132732819912:role/RoleSandboxAccess",
+            RoleSessionName="request-ssh-access",
+        )
+        logger.info(
+            "assume_role response: {}".format(
+                json.dumps(response, sort_keys=True, indent=2, default=str)
+            )
+        )
+        return response["Credentials"]
