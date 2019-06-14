@@ -5,6 +5,8 @@ TODO:
 - SQS/S3/Lambda integration - read the token from the user's queue
 - Check for wrapped tokens on the user's queue at startup.
 - Error handling for Everything
+- setup.py
+- account IDs
 """
 
 import argparse
