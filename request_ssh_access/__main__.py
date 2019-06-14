@@ -1,18 +1,16 @@
 #!/usr/bin/env python3
 
 """
-TODO:
-- Error Handling for Everything
-- setup.py
-- ci pipeline
+- TODO: Error Handling for Everything
+- TODO: setup.py
+- TODO: ci pipeline
 """
 
 import argparse
 import getpass
 import logging
 
-import config
-import vault
+from . import config, vault
 
 logging.basicConfig(
     level=logging.WARN, format="%(asctime)s %(levelname)-5s %(message)s"
