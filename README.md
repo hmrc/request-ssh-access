@@ -19,8 +19,8 @@ request-ssh-access --user aws.username --environment externaltest
 - The utility will print a template `ssh` command which you can use to log into a remote ssh host.
 
 Note that you can override:
-- `--ssh-public-key` - path to public key to sign
-- `--output-ssh-cert` - path to write signed key certificate
+- `--ssh-public-key` - path to public key to sign, default `~/.ssh/id_rsa.pub`
+- `--output-ssh-cert` - path to write signed key certificate `~/.ssh/id_rsa-cert.pub`
 
 
 ### Installation
