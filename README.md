@@ -20,7 +20,7 @@ request-ssh-access --user aws.username --environment externaltest
 
 Note that you can override:
 - `--ssh-public-key` - path to public key to sign, default `~/.ssh/id_rsa.pub`
-- `--output-ssh-cert` - path to write signed key certificate `~/.ssh/id_rsa-cert.pub`
+- `--output-ssh-cert` - path to write signed key certificate, default `~/.ssh/id_rsa-cert.pub`
 
 
 ### Installation
