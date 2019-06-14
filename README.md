@@ -9,7 +9,9 @@ A workflow helper utility to assist with requesting ssh access.
 
 ### Usage
 
-```request-ssh-access --user aws.username --environment externaltest```
+```
+request-ssh-access --user aws.username --environment externaltest
+```
 
 - Print the command to copy-paste for the authorised user to execute
 - The authorised user will receive a Vault cubbyhole token and will send it back to you
