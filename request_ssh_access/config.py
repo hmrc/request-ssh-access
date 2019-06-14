@@ -3,7 +3,7 @@ import os
 COMMAND_TEMPLATE = """
 (Note that this is for convenience only and you may modify these values to whatever you need)
 
-Please email, slack, text, or pigeon-mail to an authorised person the following command: 
+Please email, slack, text, or pigeon-mail to an authorised person the following command:
 
 `aws lambda do-it --user-name={user_name} --public-key="{public_key}" --ttl={ttl}`
 

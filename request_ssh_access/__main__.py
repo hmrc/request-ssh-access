@@ -2,7 +2,6 @@
 
 """
 - TODO: Error Handling for Everything
-- TODO: setup.py
 - TODO: ci pipeline
 """
 
@@ -78,15 +77,11 @@ def main():
     )
 
     ldap_password = getpass.getpass(prompt=prompt)
-    try:
-        unwrapped_cert = vault.unwrap(
-            args.environment,
-            vault.login(args.environment, args.user_name, ldap_password),
-            wrapped_token,
-        )
-    except:
-        print("oops, unwrapping failed, exiting")
-        raise
+    unwrapped_cert = vault.unwrap(
+        args.environment,
+        vault.login(args.environment, args.user_name, ldap_password),
+        wrapped_token,
+    )
 
     write_cert_to_file(args.output_ssh_cert, unwrapped_cert)
     print(
