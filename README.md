@@ -13,10 +13,10 @@ request-ssh-access --user aws.username --environment externaltest
 ```
 
 - The utility will print the command for the authorised user to execute. Copy and send it to them.
-- The authorised user will execute the command and receive a [https://www.vaultproject.io/docs/secrets/cubbyhole/index.html](Vault Cubbyhole token) and will send it back to you.
-- Input the cubbyhole token and your LDAP credentials. 
-- The signed certificate will be fetched from Vault and written to disk.
-- A template `ssh` command will be printed which you can use to log into a remote ssh host.
+- The authorised user will execute the command and receive a (https://www.vaultproject.io/docs/secrets/cubbyhole/index.html)[Vault Cubbyhole token] and will send it back to you.
+- Input the cubbyhole token and your LDAP credentials back in the utility. 
+- The utility will fetch the signed certificate from the appropriate Vault server.
+- The utility will print a template `ssh` command which you can use to log into a remote ssh host.
 
 Note that you can override:
 - `--ssh-public-key` - path to public key to sign
