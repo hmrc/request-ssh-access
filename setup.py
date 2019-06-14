@@ -5,7 +5,7 @@ from codecs import open
 import os
 
 
-requires = ["requests", "version-incrementor"]
+requires = ["requests"]
 
 
 def read(filename):
