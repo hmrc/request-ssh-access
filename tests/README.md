@@ -18,9 +18,9 @@ cd tests
 
 The script will: 
 1. Authenticate with `integration` Vault for
-you.
-2. Wrap a mock certificate in Vault.
-3. Give you the token to supply later.
+you (you will need to supply the password)
+2. Store a fake certificate in Vault using the wrapping API. 
+3. Give you the wrapping token.
 4. Run the request-ssh-access script.
 
 The resulting ssh certificate will be written to 
