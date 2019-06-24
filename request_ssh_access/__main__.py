@@ -38,17 +38,14 @@ def main(user_name="", environment="", ssh_public_key="", output_ssh_cert=""):
 
     ldap_password = getpass.getpass(prompt=prompt)
     unwrapped_cert = vault.unwrap(
-        environment,
-        vault.login(environment, user_name, ldap_password),
-        wrapped_token,
+        environment, vault.login(environment, user_name, ldap_password), wrapped_token
     )
 
     write_cert_to_file(output_ssh_cert, unwrapped_cert)
+    ssh_private_key = ssh_public_key.replace(".pub", "")
     print(
         "\nyou are now authorised to log in using the following command: \n"
-        'ssh -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
-            output_ssh_cert, ssh_public_key
-        )
+        'ssh -i {} -i {} "${{REMOTE_HOST}}"\n'.format(output_ssh_cert, ssh_private_key)
     )
 
 
