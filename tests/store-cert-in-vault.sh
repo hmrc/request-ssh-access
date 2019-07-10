@@ -16,6 +16,7 @@ readonly AUTH_TOKEN=$(curl -Ss -X POST \
   -H "Content-Type: application/json" \
   -d "${AUTH_REQUEST_BODY}" | jq '.auth.client_token' | sed 's/"//g')
 
+echo "Authenticated with vault.tools.integration.tax.service.gov.uk: ${AUTH_TOKEN}"
 
 readonly WRAPPED_TOKEN=$(curl -Ss -X POST \
   https://vault.tools.integration.tax.service.gov.uk/v1/sys/wrapping/wrap \
@@ -31,7 +32,7 @@ echo "Use the following token when prompted by request-ssh-access: ${WRAPPED_TOK
 echo "Press any key when ready"
 read -r
 
-request-ssh-access --user "${USERNAME}" \
-                   --environment integration \
-                   --ssh-public-key ./id_rsa.pub \
-                   --output-ssh-cert ./id_rsa-cert.pub
+request-ssh-access --user="${USERNAME}" \
+                   --environment=integration \
+                   --ssh-public-key=./id_rsa.pub \
+                   --output-ssh-cert=./id_rsa-cert.pub

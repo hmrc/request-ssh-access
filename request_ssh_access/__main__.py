@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 """
+- TODO: Add ARNs for the lambdas in non-integration environments
 - TODO: Error Handling for Everything
 - TODO: ci pipeline
 """
@@ -19,10 +20,11 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main(user_name="", environment="", ssh_public_key="", output_ssh_cert=""):
-    public_key = get_public_key(public_key_path=ssh_public_key)
+def main():
+    args = parse_args()
+    public_key = get_public_key(public_key_path=args.ssh_public_key)
 
-    print_lambda_command_to_copy(public_key, user_name)
+    print_lambda_command_to_copy(public_key, args.user_name, args.environment)
 
     wrapped_token = get_input(
         "Enter the Vault wrapped token you received back from the authorised user: "
@@ -32,49 +34,28 @@ def main(user_name="", environment="", ssh_public_key="", output_ssh_cert=""):
     prompt = (
         "Now we're ready to unwrap the signed certificate for you.\n"
         "Please enter the LDAP password for '{user}' in '{env}': ".format(
-            user=user_name, env=environment
+            user=args.user_name, env=args.environment
         )
     )
 
     ldap_password = getpass.getpass(prompt=prompt)
     unwrapped_cert = vault.unwrap(
-        environment, vault.login(environment, user_name, ldap_password), wrapped_token
+        args.environment,
+        vault.login(args.environment, args.user_name, ldap_password),
+        wrapped_token,
     )
 
-    write_cert_to_file(output_ssh_cert, unwrapped_cert)
-    ssh_private_key = ssh_public_key.replace(".pub", "")
+    write_cert_to_file(args.output_ssh_cert, unwrapped_cert)
+    ssh_private_key = args.ssh_public_key.replace(".pub", "")
     print(
         "\nyou are now authorised to log in using the following command: \n"
-        'ssh -i {} -i {} "${{REMOTE_HOST}}"\n'.format(output_ssh_cert, ssh_private_key)
-    )
-
-
-def get_input(prompt=""):
-    return input(prompt)
-
-
-def get_public_key(public_key_path):
-    with open(public_key_path, "r") as f:
-        # Clean up public key here:
-        # "ssh-rsa AAB...3odo3Xsjd user@host\n" -> "ssh-rsa AAB...3odo3Xsjd"
-        return " ".join(f.readline().rstrip().split(" ")[:2])
-
-
-def print_lambda_command_to_copy(public_key, user_name):
-    print(
-        config.COMMAND_TEMPLATE.format(
-            user_name=user_name, public_key=public_key, ttl=config.DEFAULT_TTL
+        'ssh -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
+            args.output_ssh_cert, ssh_private_key
         )
     )
 
 
-def write_cert_to_file(output_ssh_cert, unwrapped_cert):
-    with open(output_ssh_cert, "w") as f:
-        f.write(unwrapped_cert)
-    print("signed certificate written to '{}'.".format(output_ssh_cert))
-
-
-if __name__ == "__main__":
+def parse_args():
     parser = argparse.ArgumentParser(
         description="Helper utility to create Vault-signed SSH certificates"
     )
@@ -114,9 +95,38 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    main(
-        user_name=args.user_name,
-        environment=args.environment,
-        ssh_public_key=args.ssh_public_key,
-        output_ssh_cert=args.output_ssh_cert,
+
+    return args
+
+
+def get_input(prompt=""):
+    return input(prompt)
+
+
+def get_public_key(public_key_path):
+    with open(public_key_path, "r") as f:
+        # Clean up public key here:
+        # "ssh-rsa AAB...3odo3Xsjd user@host\n" -> "ssh-rsa AAB...3odo3Xsjd"
+        return " ".join(f.readline().rstrip().split(" ")[:2])
+
+
+def print_lambda_command_to_copy(public_key, user_name, environment):
+    function_arn = config.LAMBDA_ARN[environment]
+    print(
+        config.COMMAND_TEMPLATE.format(
+            function_arn=function_arn,
+            user_name=user_name,
+            public_key=public_key,
+            ttl=config.DEFAULT_TTL,
+        )
     )
+
+
+def write_cert_to_file(output_ssh_cert, unwrapped_cert):
+    with open(output_ssh_cert, "w") as f:
+        f.write(unwrapped_cert)
+    print("signed certificate written to '{}'.".format(output_ssh_cert))
+
+
+if __name__ == "__main__":
+    main()

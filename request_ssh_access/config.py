@@ -5,12 +5,14 @@ COMMAND_TEMPLATE = """
 
 Please email, slack, text, or pigeon-mail to an authorised person the following command:
 
-`aws lambda grant_ssh_access --user-name={user_name} --public-key="{public_key}" --ttl={ttl}`
+aws lambda invoke --function-name {function_arn} --payload "{{\\"user_name\\": \\"{user_name}\\", \\"ttl\\": \\"{ttl}\\", \\"public_key\\": \\"{public_key}\\"}}" /tmp/grant_outfile && cat /tmp/grant_outfile
 
 """
 
 DEFAULT_TTL = 60 * 60 * 8  # 8 hours
 DEFAULT_PUBKEY_PATH = os.path.expanduser("~/.ssh/id_rsa.pub")
 DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
-TEMPORARY_TOKEN = "s.mpFPfSSRNnCj2VVUbSfOhTj3"
-DEFAULT_PROFILE_NAME = "webops-users"
+
+LAMBDA_ARN = {
+    "integration": "arn:aws:lambda:eu-west-2:150648916438:function:grant-ssh-access"
+}
