@@ -10,7 +10,8 @@ import argparse
 import getpass
 import logging
 
-from . import config, vault
+from . import config
+from . import vault
 
 logging.basicConfig(
     level=logging.WARN, format="%(asctime)s %(levelname)-5s %(message)s"
@@ -69,11 +70,11 @@ def parse_args():
         required=True,
         choices=[
             "integration",
-            "externaltest",
-            "production",
-            "staging",
-            "qa",
-            "development",
+            # "externaltest",
+            # "production",
+            # "staging",
+            # "qa",
+            # "development",
         ],
     )
     parser.add_argument(
