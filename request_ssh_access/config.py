@@ -5,7 +5,7 @@ COMMAND_TEMPLATE = """
 
 Please email, slack, text, or pigeon-mail to an authorised person the following command:
 
-aws lambda invoke --function-name {function_arn} --payload "{{\\"user_name\\": \\"{user_name}\\", \\"ttl\\": \\"{ttl}\\", \\"public_key\\": \\"{public_key}\\"}}" /tmp/grant_outfile && cat /tmp/grant_outfile
+aws --profile=platform_owner lambda invoke --function-name {function_arn} --payload "{{\\"user_name\\": \\"{user_name}\\", \\"ttl\\": \\"{ttl}\\", \\"public_key\\": \\"{public_key}\\"}}" /tmp/grant_outfile && cat /tmp/grant_outfile
 
 """
 
