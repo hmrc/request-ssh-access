@@ -2,19 +2,10 @@ import json
 import re
 from unittest.mock import Mock
 
-import attr
 import pytest
 import responses
 
 import request_ssh_access.__main__ as main
-
-
-@attr.s
-class Args:
-    user_name = attr.ib()
-    environment = attr.ib()
-    ssh_public_key = attr.ib()
-    output_ssh_cert = attr.ib()
 
 
 @pytest.fixture
@@ -24,15 +15,20 @@ def mocked_responses():
 
 
 def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
-
-    args = Args(
+    ssh_public_key = str(tmp_path / "id_rsa.pub")
+    output_ssh_cert = str(tmp_path / "id_rsa-cert.pub")
+    args = (
+        "--user-name",
         "user_name",
+        "--environment",
         "integration",
-        str(tmp_path / "id_rsa.pub"),
-        str(tmp_path / "id_rsa-cert.pub"),
+        "--ssh-public-key",
+        ssh_public_key,
+        "--output-ssh-cert",
+        output_ssh_cert,
     )
 
-    with open(args.ssh_public_key, "w") as f:
+    with open(ssh_public_key, "w") as f:
         f.write("ssh-rsa AAA aa")
 
     fake_get_input = Mock(return_value="s.wrapped_token")
@@ -52,18 +48,3 @@ def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
     )
 
     main.main(args)
-
-
-def test_parse_args():
-    main.parse_args(
-        [
-            "--user-name",
-            "USER_NAME",
-            "--environment",
-            "integration",
-            "--ssh-public-key",
-            "SSH_PUBLIC_KEY",
-            "--output-ssh-cert",
-            "OUTPUT_SSH_CERT",
-        ]
-    )

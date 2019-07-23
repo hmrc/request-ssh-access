@@ -22,7 +22,10 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main(args):
+def main(args=None):
+    if args is None:
+        args = sys.argv[1:]
+    args = parse_args(args)
     public_key = get_public_key(public_key_path=args.ssh_public_key)
 
     print_lambda_command_to_copy(public_key, args.user_name, args.environment)
@@ -130,4 +133,4 @@ def write_cert_to_file(output_ssh_cert, unwrapped_cert):
 
 
 if __name__ == "__main__":
-    main(parse_args(sys.argv[1:]))
+    main()
