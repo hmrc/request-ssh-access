@@ -3,7 +3,6 @@
 from setuptools import setup, find_packages
 from codecs import open
 import os
-import version_incrementor
 
 
 def read(filename):
@@ -14,7 +13,7 @@ setup(
     name="request-ssh-access",
     author="HRMC Platform Security",
     email="platsec.monitor@digital.hmrc.gov.uk",
-    version=version_incrementor.prepare_release(major=0),
+    version=read('.version'),
     description="Helper utility to create Vault-signed SSH certificates",
     url="https://github.com/hmrc/request-ssh-access/",
     long_description=read("README.md"),
