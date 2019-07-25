@@ -8,6 +8,11 @@ A workflow helper utility to assist with requesting ssh access.
 - Python 3.7
 - [AWS CLI](https://aws.amazon.com/cli/) (required in order to execute the `aws lambda invoke` command)
 
+### Installation
+```bash
+pip install -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/pips/simple request-ssh-access
+```
+
 ### Usage
 ```
 request-ssh-access --user aws.username --environment externaltest
@@ -23,15 +28,32 @@ Note that you can override:
 - `--ssh-public-key` - path to public key to sign, default `~/.ssh/id_rsa.pub`
 - `--output-ssh-cert` - path to write signed key certificate, default `~/.ssh/id_rsa-cert.pub`
 
-
-
-### Installation
-Until we publish this tool to Artifactory, Git installation:
-```bash
-pip install git+https://github.com/hmrc/request-ssh-access
+### Development environment
+1. Install tox
+```
+pip install tox pre-commit
 ```
 
-(Once it's on Artifactory, `pip install -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/pips/simple request-ssh-access`)
+2. Clone the repository
+```
+git clone git@github.com:hmrc/request-ssh-access.git
+cd request-ssh-access
+```
+
+3. To run linters and tests
+```
+tox
+```
+
+4. To run formatter
+```
+tox -e black
+```
+
+### Releasing to artifactory
+1. Check out `master`
+2. Make sure you collected all changes you want published.
+3. Run `./release.sh`
 
 ### License
 
