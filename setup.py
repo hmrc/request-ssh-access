@@ -13,7 +13,7 @@ setup(
     name="request-ssh-access",
     author="HRMC Platform Security",
     email="platsec.monitor@digital.hmrc.gov.uk",
-    version=read('.version'),
+    version=read(".version"),
     description="Helper utility to create Vault-signed SSH certificates",
     url="https://github.com/hmrc/request-ssh-access/",
     long_description=read("README.md"),
