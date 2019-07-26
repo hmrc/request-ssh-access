@@ -51,9 +51,7 @@ tox -e black
 ```
 
 ### Releasing to artifactory
-1. Check out `master`
-2. Make sure you collected all changes you want published.
-3. Run `./release.sh`
+Each push to `master` will trigger a job in [build]("https://build.tax.service.gov.uk/job/platform-security/job/request-ssh-access/") which will run tests, upload the package to artefacts.tax.service.gov.uk, and create a release in this repo.
 
 ### License
 
