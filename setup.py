@@ -6,6 +6,7 @@ import os
 
 import version_incrementor
 
+
 def read(filename):
     return open(os.path.join(os.path.dirname(__file__), filename)).read()
 
