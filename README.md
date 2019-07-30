@@ -1,4 +1,3 @@
-
 # request-ssh-access
 
 A workflow helper utility to assist with requesting ssh access.
