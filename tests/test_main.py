@@ -48,3 +48,7 @@ def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
     )
 
     main.main(args)
+
+
+def test_fail():
+    assert False
