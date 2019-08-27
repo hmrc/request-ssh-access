@@ -15,21 +15,15 @@ def mocked_responses():
 
 
 def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
-    ssh_public_key = str(tmp_path / "id_rsa.pub")
     output_ssh_cert = str(tmp_path / "id_rsa-cert.pub")
     args = (
         "--user-name",
         "user_name",
         "--environment",
         "integration",
-        "--ssh-public-key",
-        ssh_public_key,
         "--output-ssh-cert",
         output_ssh_cert,
     )
-
-    with open(ssh_public_key, "w") as f:
-        f.write("ssh-rsa AAA aa")
 
     fake_get_input = Mock(return_value="s.wrapped_token")
     monkeypatch.setattr(main, "get_input", fake_get_input)

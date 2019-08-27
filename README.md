@@ -14,7 +14,7 @@ pip install -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/pips/si
 
 ### Usage
 ```
-request-ssh-access --user aws.username --environment externaltest
+request-ssh-access --user aws.username --environment integration
 ```
 
 - The utility will print the command for the authorised user to execute. Copy and send it to them.
@@ -23,9 +23,17 @@ request-ssh-access --user aws.username --environment externaltest
 - The utility will fetch the signed certificate from the appropriate Vault server.
 - The utility will print a template `ssh` command which you can use to log into a remote ssh host.
 
-Note that you can override:
-- `--ssh-public-key` - path to public key to sign, default `~/.ssh/id_rsa.pub`
-- `--output-ssh-cert` - path to write signed key certificate, default `~/.ssh/id_rsa-cert.pub`
+##### Command line options:
+###### `--output-ssh-cert`
+Path to write signed key certificate, default `~/.ssh/id_rsa-cert.pub`.
+
+When overriding this, use `ssh -i` when logging onto the remote host in order
+to point to the public key and certificate, like so:
+
+```
+ssh -i /location/of/public/key -i /location/of/certificate ${REMOTE_HOST}
+```
+
 
 ### Development environment
 1. Install tox
