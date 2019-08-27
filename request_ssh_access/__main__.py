@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 
-"""
-- TODO: Add ARNs for the lambdas in non-integration environments
-- TODO: Error Handling for Everything
-- TODO: ci pipeline
-"""
-
 import argparse
 import getpass
 import logging
@@ -26,9 +20,8 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     args = parse_args(args)
-    public_key = get_public_key(public_key_path=args.ssh_public_key)
 
-    print_lambda_command_to_copy(public_key, args.user_name, args.environment)
+    print_lambda_command_to_copy(args.user_name, args.environment)
 
     wrapped_token = get_input(
         "Enter the Vault wrapped token you received back from the authorised user: "
@@ -50,12 +43,9 @@ def main(args=None):
     )
 
     write_cert_to_file(args.output_ssh_cert, unwrapped_cert)
-    ssh_private_key = args.ssh_public_key.replace(".pub", "")
     print(
         "\nyou are now authorised to log in using the following command: \n"
-        'ssh -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
-            args.output_ssh_cert, ssh_private_key
-        )
+        'ssh "${{REMOTE_HOST}}"\n'
     )
 
 
@@ -80,14 +70,6 @@ def parse_args(argv):
             # "development",
         ],
     )
-    parser.add_argument(
-        "--ssh-public-key",
-        help="Path to read ssh public key from (default: '{}')".format(
-            config.DEFAULT_PUBKEY_PATH
-        ),
-        default=config.DEFAULT_PUBKEY_PATH,
-        type=str,
-    )
 
     parser.add_argument(
         "--output-ssh-cert",
@@ -107,21 +89,11 @@ def get_input(prompt=""):
     return input(prompt)
 
 
-def get_public_key(public_key_path):
-    with open(public_key_path, "r") as f:
-        # Clean up public key here:
-        # "ssh-rsa AAB...3odo3Xsjd user@host\n" -> "ssh-rsa AAB...3odo3Xsjd"
-        return " ".join(f.readline().rstrip().split(" ")[:2])
-
-
-def print_lambda_command_to_copy(public_key, user_name, environment):
+def print_lambda_command_to_copy(user_name, environment):
     function_arn = config.LAMBDA_ARN[environment]
     print(
         config.COMMAND_TEMPLATE.format(
-            function_arn=function_arn,
-            user_name=user_name,
-            public_key=public_key,
-            ttl=config.DEFAULT_TTL,
+            function_arn=function_arn, user_name=user_name, ttl=config.DEFAULT_TTL
         )
     )
 
