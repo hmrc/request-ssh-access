@@ -14,5 +14,10 @@ DEFAULT_PUBKEY_PATH = os.path.expanduser("~/.ssh/id_rsa.pub")
 DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
 
 LAMBDA_ARN = {
-    "integration": "arn:aws:lambda:eu-west-2:150648916438:function:grant-ssh-access"
+    "integration"  : "arn:aws:lambda:eu-west-2:150648916438:function:grant-ssh-access",
+    "development"  : "arn:aws:lambda:eu-west-2:618259438944:function:grant-ssh-access",
+    "qa"           : "arn:aws:lambda:eu-west-2:248771275994:function:grant-ssh-access",
+    "staging"      : "arn:aws:lambda:eu-west-2:186795391298:function:grant-ssh-access",
+    "externaltest" : "arn:aws:lambda:eu-west-2:970278273631:function:grant-ssh-access",
+    "production"   : "arn:aws:lambda:eu-west-2:490818658393:function:grant-ssh-access",
 }
