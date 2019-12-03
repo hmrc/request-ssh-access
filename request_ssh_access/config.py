@@ -5,10 +5,10 @@ COMMAND_TEMPLATE = """
 
 Please email, slack, text, or pigeon-mail to an authorised person the following JSON:
 ```
-{
+{{
     "user_name": "{user_name}",
     "ttl": {ttl}
-}
+}}
 ```
 
 Send them the following link for documentation:
