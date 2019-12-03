@@ -18,7 +18,7 @@ def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
     output_ssh_cert = str(tmp_path / "id_rsa-cert.pub")
     args = (
         "--user-name",
-        "user_name",
+        "myUserName",
         "--environment",
         "integration",
         "--output-ssh-cert",
