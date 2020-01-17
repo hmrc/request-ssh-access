@@ -25,11 +25,14 @@ def main(args=None):
         args = sys.argv[1:]
     args = parse_args(args)
 
-    if args.environment.lower().strip() not in PRODUCTION_ENVS:
-        wrapped_token = invoke_grant_ssh_access(args.user_name, args.environment, args.ttl)
-    else:
-        print_lambda_command_to_copy(args.user_name, args.environment)
+    generate_signed_cert(args.environment, args.user_name, args.ttl, args.output_ssh_cert)
 
+
+def generate_signed_cert(environment, username, ttl=60*60*4, output_ssh_cert=config.DEFAULT_CERT_PATH):
+    if environment.lower().strip() not in PRODUCTION_ENVS:
+        wrapped_token = invoke_grant_ssh_access(username, environment, ttl)
+    else:
+        print_lambda_command_to_copy(username, environment)
 
         wrapped_token = get_input(
             "Enter the Vault wrapped token you received back from the authorised user: "
@@ -39,18 +42,18 @@ def main(args=None):
     prompt = (
         "Now we're ready to unwrap the signed certificate for you.\n"
         "Please enter the LDAP password for '{user}' in '{env}': ".format(
-            user=args.user_name, env=args.environment
+            user=username, env=environment
         )
     )
 
     ldap_password = getpass.getpass(prompt=prompt)
     unwrapped_cert = vault.unwrap(
-        args.environment,
-        vault.login(args.environment, args.user_name, ldap_password),
+        environment,
+        vault.login(environment, username, ldap_password),
         wrapped_token,
     )
 
-    write_cert_to_file(args.output_ssh_cert, unwrapped_cert)
+    write_cert_to_file(output_ssh_cert, unwrapped_cert)
     print(
         "\nyou are now authorised to log in using the following command: \n"
         'ssh "${{REMOTE_HOST}}"\n'
@@ -127,8 +130,6 @@ def invoke_grant_ssh_access(username, environment, ttl):
     account_id = sts_connection.get_caller_identity()["Account"]
     mfa_serial = f"arn:aws:iam::638924580364:mfa/{username}"
 
-    print(account_id)
-
     # Prompt for MFA time-based one-time password (TOTP)
     mfa_token = getpass.getpass(prompt="Enter your MFA code: ")
 
@@ -159,7 +160,7 @@ def invoke_grant_ssh_access(username, environment, ttl):
             "ttl": ttl
         })
     )
-    print("JSON response")
+
     return json.loads(response['Payload'].read()).get('token')
 
 
