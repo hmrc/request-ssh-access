@@ -12,6 +12,7 @@ aws --profile=platform_owner lambda invoke --function-name {function_arn} --payl
 DEFAULT_TTL = 60 * 60 * 8  # 8 hours
 DEFAULT_PUBKEY_PATH = os.path.expanduser("~/.ssh/id_rsa.pub")
 DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
+FUNCTION_NAME = 'grant-ssh-access'
 
 LAMBDA_ARN = {
     "integration": "arn:aws:lambda:eu-west-2:150648916438:function:grant-ssh-access",
