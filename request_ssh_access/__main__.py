@@ -72,11 +72,11 @@ def parse_args(argv):
         required=True,
         choices=[
             "integration",
-            # "externaltest",
-            # "production",
-            # "staging",
-            # "qa",
-            # "development",
+            "externaltest",
+            "production",
+            "staging",
+            "qa",
+            "development",
         ],
     )
     parser.add_argument(
