@@ -9,7 +9,7 @@ A workflow helper utility to assist with requesting ssh access.
 
 ### Installation
 ```bash
-pip install -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/pips/simple request-ssh-access
+pip install --user -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/pips/simple request-ssh-access
 ```
 
 ### Usage
