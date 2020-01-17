@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import argparse
-import time
 import getpass
 import logging
 import sys
@@ -27,15 +26,15 @@ def main(args=None):
     args = parse_args(args)
 
     if args.environment.lower().strip() not in PRODUCTION_ENVS:
-        invoke_grant_ssh_access(args.user_name, args.environment, args.ttl)
+        wrapped_token = invoke_grant_ssh_access(args.user_name, args.environment, args.ttl)
     else:
         print_lambda_command_to_copy(args.user_name, args.environment)
 
 
-    wrapped_token = get_input(
-        "Enter the Vault wrapped token you received back from the authorised user: "
-    )
-    wrapped_token = wrapped_token.strip(" '\"")
+        wrapped_token = get_input(
+            "Enter the Vault wrapped token you received back from the authorised user: "
+        )
+        wrapped_token = wrapped_token.strip(" '\"")
 
     prompt = (
         "Now we're ready to unwrap the signed certificate for you.\n"
@@ -72,11 +71,11 @@ def parse_args(argv):
         required=True,
         choices=[
             "integration",
-            # "externaltest",
-            # "production",
-            # "staging",
-            # "qa",
-            # "development",
+            "externaltest",
+            "production",
+            "staging",
+            "qa",
+            "development",
         ],
     )
     parser.add_argument(
@@ -107,8 +106,6 @@ def get_input(prompt=""):
 
 def print_lambda_command_to_copy(user_name, environment):
     function_arn = config.LAMBDA_ARN[environment]
-    print(user_name, environment)
-    print(config.COMMAND_TEMPLATE)
     print(
         config.COMMAND_TEMPLATE.format(
             function_arn=function_arn, user_name=user_name, ttl=config.DEFAULT_TTL
@@ -121,21 +118,22 @@ def write_cert_to_file(output_ssh_cert, unwrapped_cert):
         f.write(unwrapped_cert)
     print("signed certificate written to '{}'.".format(output_ssh_cert))
 
+
 def invoke_grant_ssh_access(username, environment, ttl):
 
-    role_arn = "arn:aws:iam::150648916438:role/RoleGrantSSHAccess"
     boto3.setup_default_session(profile_name="webops-users")
 
     sts_connection = boto3.client('sts')
     account_id = sts_connection.get_caller_identity()["Account"]
-    mfa_serial = "arn:aws:iam::638924580364:mfa/richard.fortescuewebb"
+    mfa_serial = f"arn:aws:iam::638924580364:mfa/{username}"
 
     print(account_id)
 
     # Prompt for MFA time-based one-time password (TOTP)
-    mfa_token = input("Enter the MFA code: ")
+    mfa_token = getpass.getpass(prompt="Enter your MFA code: ")
+
     acct_b = sts_connection.assume_role(
-        RoleArn=role_arn,
+        RoleArn=config.GRANT_ROLE_ARN[environment],
         RoleSessionName="GrantSSHAccess",
         SerialNumber=mfa_serial,
         TokenCode=mfa_token
@@ -162,8 +160,7 @@ def invoke_grant_ssh_access(username, environment, ttl):
         })
     )
     print("JSON response")
-    print(response['Payload'].read())
-
+    return json.loads(response['Payload'].read()).get('token')
 
 
 if __name__ == "__main__":
