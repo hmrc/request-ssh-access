@@ -20,7 +20,7 @@ aws --profile=platform_owner lambda invoke --function-name {function_arn} --payl
 DEFAULT_TTL = 60 * 60 * 8  # 8 hours
 DEFAULT_PUBKEY_PATH = os.path.expanduser("~/.ssh/id_rsa.pub")
 DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
-FUNCTION_NAME = 'grant-ssh-access'
+FUNCTION_NAME = "grant-ssh-access"
 
 ENVIRONMENT_ACCOUNT_IDS = {
     "integration": "150648916438",
@@ -31,8 +31,12 @@ ENVIRONMENT_ACCOUNT_IDS = {
     "production": "490818658393",
 }
 
-LAMBDA_ARN = {environment_name: f"arn:aws:lambda:eu-west-2:{account_id}:function:grant-ssh-access"
-              for environment_name, account_id in ENVIRONMENT_ACCOUNT_IDS.items()}
+LAMBDA_ARN = {
+    environment_name: f"arn:aws:lambda:eu-west-2:{account_id}:function:grant-ssh-access"
+    for environment_name, account_id in ENVIRONMENT_ACCOUNT_IDS.items()
+}
 
-GRANT_ROLE_ARN = {environment_name: f"arn:aws:iam::{account_id}:role/RoleGrantSSHAccess"
-                  for environment_name, account_id in ENVIRONMENT_ACCOUNT_IDS.items()}
+GRANT_ROLE_ARN = {
+    environment_name: f"arn:aws:iam::{account_id}:role/RoleGrantSSHAccess"
+    for environment_name, account_id in ENVIRONMENT_ACCOUNT_IDS.items()
+}
