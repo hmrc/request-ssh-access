@@ -3,6 +3,7 @@ import os
 
 COMMAND_TEMPLATE = """
 (Note that this is for convenience only and you may modify these values to whatever you need)
+
 Please email, slack, text, or pigeon-mail to an authorised person the following JSON:
 ```
 {{
@@ -10,14 +11,18 @@ Please email, slack, text, or pigeon-mail to an authorised person the following 
     "ttl": {ttl}
 }}
 ```
+
 Send them the following link for documentation:
 https://github.com/hmrc/grant-ssh-access/blob/master/README.md#instructions-for-granting-ssh-access-to-an-engineer
+
 Or if the person has AWS CLI setup, they can run the following
+
 aws --profile=platform_owner lambda invoke --function-name {function_arn} --payload "{{\\"user_name\\": \\"{user_name}\\", \\"ttl\\": \\"{ttl}\\"}}" /tmp/grant_outfile && cat /tmp/grant_outfile
 """
 
+DEFAULT_TTL = 3600  # 1 hour
+MAX_TTL = 43200  # 12 hours
 
-DEFAULT_TTL = 60 * 60 * 8  # 8 hours
 DEFAULT_PUBKEY_PATH = os.path.expanduser("~/.ssh/id_rsa.pub")
 DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
 FUNCTION_NAME = 'grant-ssh-access'
