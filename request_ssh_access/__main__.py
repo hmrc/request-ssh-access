@@ -118,7 +118,7 @@ def print_lambda_command_to_copy(user_name, environment):
 
 
 def write_cert_to_file(output_ssh_cert, unwrapped_cert):
-    if os.path.is_file(output_ssh_cert):
+    if os.path.isfile(output_ssh_cert):
         if not yes_or_no(f"{output_ssh_cert} already exists. Do you want to overwrite it?"):
             exit(0)
     with open(output_ssh_cert, "w") as f:
@@ -169,7 +169,7 @@ def invoke_grant_ssh_access(username, environment, ttl):
 
 def yes_or_no(question):
     reply = str(input(question + ' (Y/n): ')).lower().strip()
-    if reply[0] == 'n':
+    if not reply or reply[0] == 'n':
         return False
     else:
         return True
