@@ -127,6 +127,8 @@ def test_parse_args(tmp_path, monkeypatch, mocked_responses, capsys):
     assert parsed_args.input_ssh_cert == input_ssh_cert
     assert hasattr(parsed_args, "output_ssh_cert")
     assert parsed_args.output_ssh_cert == output_ssh_cert
+    assert hasattr(parsed_args, "ttl")
+    assert parsed_args.ttl == 3600
 
 
 def test_parse_args_no_output_cert(tmp_path):
@@ -150,3 +152,48 @@ def test_parse_args_no_output_cert(tmp_path):
     assert parsed_args.input_ssh_cert == input_ssh_cert
     assert hasattr(parsed_args, "output_ssh_cert")
     assert parsed_args.output_ssh_cert is None
+
+
+def test_parse_args_sets_ttl(tmp_path):
+    input_ssh_cert = str(tmp_path / "id_rsa.pub")
+    args = (
+        "--user-name",
+        "myUserName",
+        "--environment",
+        "integration",
+        "--input-ssh-cert",
+        input_ssh_cert,
+        "--ttl",
+        "43200",
+    )
+
+    parsed_args = main.parse_args(args)
+
+    assert hasattr(parsed_args, "user_name")
+    assert parsed_args.user_name == "myUserName"
+    assert hasattr(parsed_args, "environment")
+    assert parsed_args.environment == "integration"
+    assert hasattr(parsed_args, "input_ssh_cert")
+    assert parsed_args.input_ssh_cert == input_ssh_cert
+    assert hasattr(parsed_args, "output_ssh_cert")
+    assert parsed_args.output_ssh_cert is None
+    assert parsed_args.ttl == 43200
+
+
+def test_exception_raised(tmp_path):
+    input_ssh_cert = str(tmp_path / "id_rsa.pub")
+    args = (
+        "--user-name",
+        "myUserName",
+        "--environment",
+        "integration",
+        "--input-ssh-cert",
+        input_ssh_cert,
+        "--ttl",
+        "43201",
+    )
+
+    parsed_args = main.parse_args(args)
+
+    with pytest.raises(Exception):
+        main.main(parsed_args)
