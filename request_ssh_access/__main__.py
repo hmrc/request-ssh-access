@@ -135,7 +135,7 @@ def invoke_grant_ssh_access(username, environment, ttl):
     mfa_serial = f"arn:aws:iam::638924580364:mfa/{username}"
 
     # Prompt for MFA time-based one-time password (TOTP)
-    mfa_token = getpass.getpass(prompt="Enter your MFA code: ")
+    mfa_token = getpass.getpass(prompt="Enter your MFA code (must be different to your previous MFA token): ")
 
     acct_b = sts_connection.assume_role(
         RoleArn=config.GRANT_ROLE_ARN[environment],
