@@ -169,7 +169,7 @@ def invoke_grant_ssh_access(username, environment, ttl):
 
 def yes_or_no(question):
     reply = str(input(question + ' (Y/n): ')).lower().strip()
-    if not reply or reply[0] == 'n':
+    if reply and reply[0] == 'n':
         return False
     else:
         return True
