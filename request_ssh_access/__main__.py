@@ -22,7 +22,11 @@ def main(args=None):
         args = sys.argv[1:]
     args = parse_args(args)
 
-    print_lambda_command_to_copy(args.user_name, args.environment)
+    if args.ttl:
+        if args.ttl > config.MAX_TTL:
+            raise Exception("WARNING: The TTL requested is greater than MAX_TTL")
+
+    print_lambda_command_to_copy(args.user_name, args.environment, ttl=args.ttl)
 
     wrapped_token = get_input(
         "Enter the Vault wrapped token you received back from the authorised user: "
@@ -94,8 +98,15 @@ def parse_args(argv):
         "--output-ssh-cert", help="Path to write signed certificate", type=str,
     )
 
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--ttl",
+        help="TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour",
+        type=int,
+        required=False,
+        default=config.DEFAULT_TTL,
+    )
 
+    args = parser.parse_args(argv)
     return args
 
 
@@ -113,11 +124,11 @@ def get_output_cert_path(args: argparse.Namespace):
             return "{}-cert.pub".format(args.input_ssh_cert)
 
 
-def print_lambda_command_to_copy(user_name, environment):
+def print_lambda_command_to_copy(user_name, environment, ttl):
     function_arn = config.LAMBDA_ARN[environment]
     print(
         config.COMMAND_TEMPLATE.format(
-            function_arn=function_arn, user_name=user_name, ttl=config.DEFAULT_TTL
+            function_arn=function_arn, user_name=user_name, ttl=ttl
         )
     )
 

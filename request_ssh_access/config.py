@@ -20,7 +20,8 @@ aws --profile=platform_owner lambda invoke --function-name {function_arn} --payl
 
 """
 
-DEFAULT_TTL = 60 * 60 * 8  # 8 hours
+DEFAULT_TTL = 3600  # 1 hour
+MAX_TTL = 43200  # 12 hours
 DEFAULT_PUBKEY_PATH = os.path.expanduser("~/.ssh/id_rsa.pub")
 DEFAULT_CERT_PATH = os.path.expanduser("~/.ssh/id_rsa-cert.pub")
 
