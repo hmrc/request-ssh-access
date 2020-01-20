@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 import argparse
-import getpass
-import logging
-import sys
 import boto3
+import getpass
 import json
+import logging
+import os
+import sys
 
 from . import config
 from . import vault
@@ -117,6 +118,9 @@ def print_lambda_command_to_copy(user_name, environment):
 
 
 def write_cert_to_file(output_ssh_cert, unwrapped_cert):
+    if os.path.is_file(output_ssh_cert):
+        if not yes_or_no(f"{output_ssh_cert} already exists. Do you want to overwrite it?"):
+            exit(0)
     with open(output_ssh_cert, "w") as f:
         f.write(unwrapped_cert)
     print("signed certificate written to '{}'.".format(output_ssh_cert))
@@ -163,6 +167,12 @@ def invoke_grant_ssh_access(username, environment, ttl):
 
     return json.loads(response['Payload'].read()).get('token')
 
+def yes_or_no(question):
+    reply = str(input(question + ' (Y/n): ')).lower().strip()
+    if reply[0] == 'n':
+        return False
+    else:
+        return True
 
 if __name__ == "__main__":
     main()
