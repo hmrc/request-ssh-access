@@ -5,7 +5,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 import responses
-import moto
 
 import request_ssh_access.__main__ as main
 
@@ -36,6 +35,7 @@ def test_happy_path(
     fake_get_input = Mock(return_value="s.wrapped_token")
     monkeypatch.setattr(main, "get_input", fake_get_input)
     monkeypatch.setattr(main.getpass, "getpass", Mock(return_value="000000"))
+    monkeypatch.setattr(main.boto3, "setup_default_session", Mock())
 
     mocked_responses.add(
         mocked_responses.POST,
