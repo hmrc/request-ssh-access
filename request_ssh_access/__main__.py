@@ -22,7 +22,7 @@ def main(args=None):
         HEADER = "\033[95m"
         OKBLUE = "\033[94m"
         OKGREEN = "\033[92m"
-        WARNING = "\033[93m"
+        PROMPT = "\033[93m"
         FAIL = "\033[91m"
         ENDC = "\033[0m"
         BOLD = "\033[1m"
@@ -44,7 +44,7 @@ def main(args=None):
     print_lambda_command_to_copy(args.user_name, args.environment, ttl=args.ttl)
 
     wrapped_token = get_input(
-        bcolors.OKGREEN
+        bcolors.PROMPT
         + "Enter the Vault wrapped token you received back from the authorised user: "
         + bcolors.ENDC
     )
@@ -52,7 +52,7 @@ def main(args=None):
 
     prompt = (
         "Now we're ready to unwrap the signed certificate for you.\n"
-        + bcolors.OKGREEN
+        + bcolors.PROMPT
         + f"Please enter the LDAP password for {args.user_name} in '{args.environment}': "
         + bcolors.ENDC
     )
