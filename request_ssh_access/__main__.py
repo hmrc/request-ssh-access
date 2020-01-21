@@ -6,15 +6,10 @@ import logging
 import sys
 import re
 
+import crayons
+
 from . import config
 from . import vault
-
-logging.basicConfig(
-    level=logging.WARN, format="%(asctime)s %(levelname)-5s %(message)s"
-)
-
-
-logger = logging.getLogger(__name__)
 
 
 def main(args=None):
@@ -29,15 +24,23 @@ def main(args=None):
     print_lambda_command_to_copy(args.user_name, args.environment, ttl=args.ttl)
 
     wrapped_token = get_input(
-        "Enter the Vault wrapped token you received back from the authorised user: "
+        crayons.yellow(
+            "Enter the Vault wrapped token you received back from the authorised user: "
+        )
     )
     wrapped_token = wrapped_token.strip(" '\"")
 
-    prompt = (
-        "Now we're ready to unwrap the signed certificate for you.\n"
-        "Please enter the LDAP password for '{user}' in '{env}': ".format(
-            user=args.user_name, env=args.environment
-        )
+    prompt = "\n".join(
+        [
+            "Now we're ready to unwrap the signed certificate for you.",
+            str(
+                crayons.yellow(
+                    "Please enter the LDAP password for '{user}': ".format(
+                        user=args.user_name
+                    )
+                )
+            ),
+        ]
     )
 
     ldap_password = getpass.getpass(prompt=prompt)
@@ -49,16 +52,28 @@ def main(args=None):
 
     write_cert_to_file(get_output_cert_path(args), unwrapped_cert)
     print(
-        "\nyou are now authorised to log in using the following command: \n",
-        'ssh -o "IdentityAgent none" -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
-            args.input_ssh_cert, get_output_cert_path(args)
-        ),
-        "\nor add the following to the appropriate Hosts section in your ~/.ssh/confg\n",
-        "\n\tUser {}".format(args.user_name),
-        "\n\tIdentitiesOnly yes",
-        "\n\tIdentityFile {}".format(args.input_ssh_cert),
-        "\n\nand then log in with the following command: \n",
-        'ssh "${{REMOTE_HOST}}"\n',
+        "\n".join(
+            [
+                str(
+                    crayons.green(
+                        "You are now authorised to log in using the following command:"
+                    )
+                ),
+                str(
+                    crayons.blue(
+                        'ssh -o "IdentityAgent none" -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
+                            args.input_ssh_cert, get_output_cert_path(args)
+                        )
+                    )
+                ),
+                "or add the following to the appropriate Hosts section in your ~/.ssh/confg",
+                "\tUser {}".format(args.user_name),
+                "\tIdentitiesOnly yes",
+                "\tIdentityFile {}".format(args.input_ssh_cert),
+                "\nand then log in with the following command: \n",
+                'ssh "${{REMOTE_HOST}}"\n',
+            ]
+        )
     )
 
 
@@ -95,7 +110,7 @@ def parse_args(argv):
     )
 
     parser.add_argument(
-        "--output-ssh-cert", help="Path to write signed certificate", type=str,
+        "--output-ssh-cert", help="Path to write signed certificate", type=str
     )
 
     parser.add_argument(
