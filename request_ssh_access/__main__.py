@@ -39,13 +39,13 @@ def main(args=None):
             args = sys.argv[1:]
         args = parse_args(args)
 
-      generate_signed_cert(
-          args.environment,
-          args.user_name,
-          args.input_ssh_cert,
-          args.ttl,
-          get_output_cert_path(args),
-      )
+        generate_signed_cert(
+            args.environment,
+            args.user_name,
+            args.input_ssh_cert,
+            args.ttl,
+            get_output_cert_path(args),
+        )
     except Exception as e:
         print(e)
         exit(1)
@@ -65,7 +65,7 @@ def generate_signed_cert(
             + bcolors.ENDC
         )
         raise Exception(max_ttl_message)
-          
+
     environment = environment.lower().strip()
     if environment not in PRODUCTION_ENVS:
         wrapped_token = invoke_grant_ssh_access(username, environment, ttl)
@@ -78,13 +78,13 @@ def generate_signed_cert(
             + bcolors.ENDC
         )
         wrapped_token = wrapped_token.strip(" '\"")
-        
+
     prompt = (
-            "Now we're ready to unwrap the signed certificate for you.\n"
-            + bcolors.PROMPT
-            + f"Please enter the LDAP password for {args.user_name}: "
-            + bcolors.ENDC
-             )
+        "Now we're ready to unwrap the signed certificate for you.\n"
+        + bcolors.PROMPT
+        + f"Please enter the LDAP password for {username}: "
+        + bcolors.ENDC
+    )
 
     ldap_password = getpass.getpass(prompt=prompt)
     unwrapped_cert = vault.unwrap(
@@ -147,7 +147,7 @@ def invoke_grant_ssh_access(username, environment, ttl):
 
     sts_connection = boto3.client("sts")
     account_id = sts_connection.get_caller_identity()["Account"]
-    mfa_serial = f"arn:aws:iam::638924580364:mfa/{username}"
+    mfa_serial = f"arn:aws:iam::{account_id}:mfa/{username}"
 
     # Prompt for MFA time-based one-time password (TOTP)
     mfa_token = getpass.getpass(
