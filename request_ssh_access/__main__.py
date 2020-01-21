@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import sys
+import re
 
 from . import config
 from . import vault
@@ -25,6 +26,12 @@ def main(args=None):
     if args is None:
         args = sys.argv[1:]
     args = parse_args(args)
+
+    if args.ttl:
+        if args.ttl > config.MAX_TTL:
+            raise Exception("WARNING: The TTL requested is greater than MAX_TTL")
+
+    print_lambda_command_to_copy(args.user_name, args.environment, ttl=args.ttl)
 
     generate_signed_cert(
         args.environment, args.user_name, args.ttl, args.output_ssh_cert
@@ -56,10 +63,18 @@ def generate_signed_cert(
         environment, vault.login(environment, username, ldap_password), wrapped_token,
     )
 
-    write_cert_to_file(output_ssh_cert, unwrapped_cert)
+    write_cert_to_file(get_output_cert_path(args), unwrapped_cert)
     print(
-        "\nyou are now authorised to log in using the following command: \n"
-        'ssh "${{REMOTE_HOST}}"\n'
+        "\nyou are now authorised to log in using the following command: \n",
+        'ssh -o "IdentityAgent none" -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
+            args.input_ssh_cert, get_output_cert_path(args)
+        ),
+        "\nor add the following to the appropriate Hosts section in your ~/.ssh/confg\n",
+        "\n\tUser {}".format(args.user_name),
+        "\n\tIdentitiesOnly yes",
+        "\n\tIdentityFile {}".format(args.input_ssh_cert),
+        "\n\nand then log in with the following command: \n",
+        'ssh "${{REMOTE_HOST}}"\n',
     )
 
 
@@ -93,16 +108,28 @@ def parse_args(argv):
     )
 
     parser.add_argument(
-        "--output-ssh-cert",
-        help="Path to write signed certificate (default: '{}')".format(
-            config.DEFAULT_CERT_PATH
+        "--input-ssh-cert",
+        help="Certificate to be signed (default: '{}')".format(
+            config.DEFAULT_PUBKEY_PATH
         ),
-        default=config.DEFAULT_CERT_PATH,
+        default=config.DEFAULT_PUBKEY_PATH,
         type=str,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--output-ssh-cert", help="Path to write signed certificate", type=str,
+    )
+
+    parser.add_argument(
+        "--ttl",
+        help="TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour",
+        type=int,
+        required=False,
+        default=config.DEFAULT_TTL,
     )
 
     args = parser.parse_args(argv)
-
     return args
 
 
@@ -110,11 +137,21 @@ def get_input(prompt=""):
     return input(prompt)
 
 
-def print_lambda_command_to_copy(user_name, environment):
+def get_output_cert_path(args: argparse.Namespace):
+    if hasattr(args, "output_ssh_cert") and args.output_ssh_cert is not None:
+        return args.output_ssh_cert
+    else:
+        if args.input_ssh_cert.endswith(".pub"):
+            return re.sub(r"^(.*)\.pub", r"\1-cert.pub", args.input_ssh_cert)
+        else:
+            return "{}-cert.pub".format(args.input_ssh_cert)
+
+
+def print_lambda_command_to_copy(user_name, environment, ttl):
     function_arn = config.LAMBDA_ARN[environment]
     print(
         config.COMMAND_TEMPLATE.format(
-            function_arn=function_arn, user_name=user_name, ttl=config.DEFAULT_TTL
+            function_arn=function_arn, user_name=user_name, ttl=ttl
         )
     )
 
@@ -139,7 +176,9 @@ def invoke_grant_ssh_access(username, environment, ttl):
     mfa_serial = f"arn:aws:iam::638924580364:mfa/{username}"
 
     # Prompt for MFA time-based one-time password (TOTP)
-    mfa_token = getpass.getpass(prompt="Enter your MFA code: ")
+    mfa_token = getpass.getpass(
+        prompt="Enter your MFA code (must be different to your previous MFA token): "
+    )
 
     acct_b = sts_connection.assume_role(
         RoleArn=config.GRANT_ROLE_ARN[environment],
@@ -171,7 +210,7 @@ def invoke_grant_ssh_access(username, environment, ttl):
 
 def yes_or_no(question):
     reply = str(input(question + " (Y/n): ")).lower().strip()
-    if not reply or reply[0] == "n":
+    if reply and reply[0] == "n":
         return False
     else:
         return True
