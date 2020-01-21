@@ -1,10 +1,11 @@
 import json
 import re
 import argparse
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 import responses
+import moto
 
 import request_ssh_access.__main__ as main
 
@@ -15,7 +16,10 @@ def mocked_responses():
         yield rsps
 
 
-def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
+@patch("request_ssh_access.__main__.boto3.client", autospec=True)
+def test_happy_path(
+    mocked_boto3_client, tmp_path, monkeypatch, mocked_responses, capsys
+):
     output_ssh_cert = str(tmp_path / "id_rsa-cert.pub")
     input_ssh_cert = str(tmp_path / "id_rsa.pub")
     args = (
@@ -31,7 +35,7 @@ def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
 
     fake_get_input = Mock(return_value="s.wrapped_token")
     monkeypatch.setattr(main, "get_input", fake_get_input)
-    monkeypatch.setattr(main.getpass, "getpass", Mock(return_value="toor"))
+    monkeypatch.setattr(main.getpass, "getpass", Mock(return_value="000000"))
 
     mocked_responses.add(
         mocked_responses.POST,
@@ -44,6 +48,10 @@ def test_happy_path(tmp_path, monkeypatch, mocked_responses, capsys):
         url=re.compile(r".*sys/wrapping/unwrap"),
         body=json.dumps({"data": {"signed_key": "signed_key"}}),
     )
+
+    mocked_payload = Mock()
+    mocked_payload.read.return_value = '{"token": "s.atimakkok"}'
+    mocked_boto3_client.return_value.invoke.return_value = {"Payload": mocked_payload}
 
     main.main(args)
 

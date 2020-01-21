@@ -34,14 +34,23 @@ def main(args=None):
     print_lambda_command_to_copy(args.user_name, args.environment, ttl=args.ttl)
 
     generate_signed_cert(
-        args.environment, args.user_name, args.ttl, args.output_ssh_cert
+        args.environment,
+        args.user_name,
+        args.input_ssh_cert,
+        args.ttl,
+        get_output_cert_path(args),
     )
 
 
 def generate_signed_cert(
-    environment, username, ttl=60 * 60 * 4, output_ssh_cert=config.DEFAULT_CERT_PATH
+    environment,
+    username,
+    input_ssh_cert,
+    ttl=60 * 60 * 4,
+    output_ssh_cert=config.DEFAULT_CERT_PATH,
 ):
-    if environment.lower().strip() not in PRODUCTION_ENVS:
+    environment = environment.lower().strip()
+    if environment not in PRODUCTION_ENVS:
         wrapped_token = invoke_grant_ssh_access(username, environment, ttl)
     else:
         print_lambda_command_to_copy(username, environment)
@@ -60,73 +69,26 @@ def generate_signed_cert(
 
     ldap_password = getpass.getpass(prompt=prompt)
     unwrapped_cert = vault.unwrap(
-        environment, vault.login(environment, username, ldap_password), wrapped_token,
+        environment, vault.login(environment, username, ldap_password), wrapped_token
     )
 
-    write_cert_to_file(get_output_cert_path(args), unwrapped_cert)
+    write_cert_to_file(output_ssh_cert, unwrapped_cert)
     print(
         "\nyou are now authorised to log in using the following command: \n",
         'ssh -o "IdentityAgent none" -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
-            args.input_ssh_cert, get_output_cert_path(args)
+            input_ssh_cert, output_ssh_cert
         ),
         "\nor add the following to the appropriate Hosts section in your ~/.ssh/confg\n",
-        "\n\tUser {}".format(args.user_name),
+        "\n\tUser {}".format(username),
         "\n\tIdentitiesOnly yes",
-        "\n\tIdentityFile {}".format(args.input_ssh_cert),
+        "\n\tIdentityFile {}".format(input_ssh_cert),
         "\n\nand then log in with the following command: \n",
         'ssh "${{REMOTE_HOST}}"\n',
     )
 
 
-def parse_args(argv):
-    parser = argparse.ArgumentParser(
-        description="Helper utility to create Vault-signed SSH certificates"
-    )
-    parser.add_argument(
-        "--user-name", help="AWS/LDAP user name", type=str, required=True
-    )
-    parser.add_argument(
-        "--environment",
-        help="Environment to run in",
-        type=str,
-        required=True,
-        choices=[
-            "integration",
-            "externaltest",
-            "production",
-            "staging",
-            "qa",
-            "development",
-        ],
-    )
-
-    parser.add_argument(
-        "--input-ssh-cert",
-        help="Certificate to be signed (default: '{}')".format(
-            config.DEFAULT_PUBKEY_PATH
-        ),
-        default=config.DEFAULT_PUBKEY_PATH,
-        type=str,
-        required=True,
-    )
-
-    parser.add_argument(
-        "--output-ssh-cert", help="Path to write signed certificate", type=str,
-    )
-
-    parser.add_argument(
-        "--ttl",
-        help="TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour",
-        type=int,
-        required=False,
-        default=config.DEFAULT_TTL,
-    )
-
-    args = parser.parse_args(argv)
-    return args
-
-
 def get_input(prompt=""):
+    """ this is here so input() could be mocked """
     return input(prompt)
 
 
@@ -203,10 +165,58 @@ def invoke_grant_ssh_access(username, environment, ttl):
 
 def yes_or_no(question):
     reply = str(input(question + " (Y/n): ")).lower().strip()
-    if reply and reply[0] == "n":
-        return False
-    else:
+    if not reply or reply == "y":
         return True
+    else:
+        return False
+
+
+def parse_args(argv):
+    parser = argparse.ArgumentParser(
+        description="Helper utility to create Vault-signed SSH certificates"
+    )
+    parser.add_argument(
+        "--user-name", help="AWS/LDAP user name", type=str, required=True
+    )
+    parser.add_argument(
+        "--environment",
+        help="Environment to run in",
+        type=str,
+        required=True,
+        choices=[
+            "integration",
+            "externaltest",
+            "production",
+            "staging",
+            "qa",
+            "development",
+        ],
+    )
+
+    parser.add_argument(
+        "--input-ssh-cert",
+        help="Certificate to be signed (default: '{}')".format(
+            config.DEFAULT_PUBKEY_PATH
+        ),
+        default=config.DEFAULT_PUBKEY_PATH,
+        type=str,
+        required=True,
+    )
+
+    parser.add_argument(
+        "--output-ssh-cert", help="Path to write signed certificate", type=str
+    )
+
+    parser.add_argument(
+        "--ttl",
+        help="TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour",
+        type=int,
+        required=False,
+        default=config.DEFAULT_TTL,
+    )
+
+    args = parser.parse_args(argv)
+    return args
 
 
 if __name__ == "__main__":
