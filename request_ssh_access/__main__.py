@@ -18,26 +18,43 @@ logger = logging.getLogger(__name__)
 
 
 def main(args=None):
+    class bcolors:
+        HEADER = "\033[95m"
+        OKBLUE = "\033[94m"
+        OKGREEN = "\033[92m"
+        WARNING = "\033[93m"
+        FAIL = "\033[91m"
+        ENDC = "\033[0m"
+        BOLD = "\033[1m"
+        UNDERLINE = "\033[4m"
+
     if args is None:
         args = sys.argv[1:]
     args = parse_args(args)
 
-    if args.ttl:
-        if args.ttl > config.MAX_TTL:
-            raise Exception("WARNING: The TTL requested is greater than MAX_TTL")
+    if args.ttl > config.MAX_TTL:
+        sys.tracebacklimit = -1
+        max_ttl_message = (
+            bcolors.FAIL
+            + f"FAILED: The TTL requested is greater than MAX_TTL which is set {config.MAX_TTL}\n"
+            + bcolors.ENDC
+        )
+        raise Exception(max_ttl_message)
 
     print_lambda_command_to_copy(args.user_name, args.environment, ttl=args.ttl)
 
     wrapped_token = get_input(
-        "Enter the Vault wrapped token you received back from the authorised user: "
+        bcolors.OKGREEN
+        + "Enter the Vault wrapped token you received back from the authorised user: "
+        + bcolors.ENDC
     )
     wrapped_token = wrapped_token.strip(" '\"")
 
     prompt = (
         "Now we're ready to unwrap the signed certificate for you.\n"
-        "Please enter the LDAP password for '{user}' in '{env}': ".format(
-            user=args.user_name, env=args.environment
-        )
+        + bcolors.OKGREEN
+        + f"Please enter the LDAP password for {args.user_name} in '{args.environment}': "
+        + bcolors.ENDC
     )
 
     ldap_password = getpass.getpass(prompt=prompt)
