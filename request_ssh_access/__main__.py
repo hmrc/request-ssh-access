@@ -70,7 +70,7 @@ def generate_signed_cert(
     if environment not in PRODUCTION_ENVS:
         wrapped_token = invoke_grant_ssh_access(username, environment, ttl)
     else:
-        print_lambda_command_to_copy(username, environment)
+        print_lambda_command_to_copy(username, environment, ttl)
 
         wrapped_token = get_input(
             bcolors.PROMPT
