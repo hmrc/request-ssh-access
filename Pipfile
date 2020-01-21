@@ -11,6 +11,7 @@ twine = "*"
 flake8 = "*"
 tox = "*"
 boto3 = "*"
+responses = "*"
 
 [requires]
 python_version = "3.7"

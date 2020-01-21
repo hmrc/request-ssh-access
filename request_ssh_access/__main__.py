@@ -99,13 +99,6 @@ def parse_args(argv):
             "development",
         ],
     )
-    parser.add_argument(
-        "--ttl",
-        help="TTL for certificate in seconds",
-        type=int,
-        required=False,
-        default=60 * 60 * 4,  # 4 hours
-    )
 
     parser.add_argument(
         "--input-ssh-cert",
