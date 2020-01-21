@@ -14,7 +14,7 @@ pip install --user -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/
 
 ### Usage
 ```
-request-ssh-access --input-ssh-cert ~/path/to/ssh/key --user aws.username --environment integration
+request-ssh-access --input-ssh-cert ~/path/to/ssh/key --user aws.username --environment integration --ttl (optional)
 ```
 
 - The utility will print the command for the authorised user to execute. Copy and send it to them.
@@ -35,6 +35,9 @@ utility will work out the correct path for the signed certificate.
 Path to write signed key certificate, if not supplied the default will be based
 on the value supplied with the `--input-ssh-cert` parameter. Using the defaults
 will result in a default value of `~/.ssh/id_rsa-cert.pub`.
+
+###### `--ttl`
+Optional TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour.
 
 ### Logging in
 To log in with a signed certificate, you must have SSH configured to use your

@@ -22,24 +22,33 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class bcolors:
+    HEADER = "\033[95m"
+    OKBLUE = "\033[94m"
+    OKGREEN = "\033[92m"
+    PROMPT = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
+
+
 def main(args=None):
-    if args is None:
-        args = sys.argv[1:]
-    args = parse_args(args)
+    try:
+        if args is None:
+            args = sys.argv[1:]
+        args = parse_args(args)
 
-    if args.ttl:
-        if args.ttl > config.MAX_TTL:
-            raise Exception("WARNING: The TTL requested is greater than MAX_TTL")
-
-    print_lambda_command_to_copy(args.user_name, args.environment, ttl=args.ttl)
-
-    generate_signed_cert(
-        args.environment,
-        args.user_name,
-        args.input_ssh_cert,
-        args.ttl,
-        get_output_cert_path(args),
-    )
+      generate_signed_cert(
+          args.environment,
+          args.user_name,
+          args.input_ssh_cert,
+          args.ttl,
+          get_output_cert_path(args),
+      )
+    except Exception as e:
+        print(e)
+        exit(1)
 
 
 def generate_signed_cert(
@@ -49,6 +58,14 @@ def generate_signed_cert(
     ttl=60 * 60 * 4,
     output_ssh_cert=config.DEFAULT_CERT_PATH,
 ):
+    if ttl > config.MAX_TTL:
+        max_ttl_message = (
+            bcolors.FAIL
+            + f"FAILED: The TTL requested is greater than MAX_TTL which is set {config.MAX_TTL}\n"
+            + bcolors.ENDC
+        )
+        raise Exception(max_ttl_message)
+          
     environment = environment.lower().strip()
     if environment not in PRODUCTION_ENVS:
         wrapped_token = invoke_grant_ssh_access(username, environment, ttl)
@@ -56,16 +73,18 @@ def generate_signed_cert(
         print_lambda_command_to_copy(username, environment)
 
         wrapped_token = get_input(
-            "Enter the Vault wrapped token you received back from the authorised user: "
+            bcolors.PROMPT
+            + "Enter the Vault wrapped token you received back from the authorised user: "
+            + bcolors.ENDC
         )
         wrapped_token = wrapped_token.strip(" '\"")
-
+        
     prompt = (
-        "Now we're ready to unwrap the signed certificate for you.\n"
-        "Please enter the LDAP password for '{user}' in '{env}': ".format(
-            user=username, env=environment
-        )
-    )
+            "Now we're ready to unwrap the signed certificate for you.\n"
+            + bcolors.PROMPT
+            + f"Please enter the LDAP password for {args.user_name}: "
+            + bcolors.ENDC
+             )
 
     ldap_password = getpass.getpass(prompt=prompt)
     unwrapped_cert = vault.unwrap(

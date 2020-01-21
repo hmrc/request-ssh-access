@@ -203,5 +203,5 @@ def test_exception_raised(tmp_path):
 
     parsed_args = main.parse_args(args)
 
-    with pytest.raises(Exception):
+    with pytest.raises(SystemExit):
         main.main(parsed_args)
