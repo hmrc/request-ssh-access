@@ -19,7 +19,7 @@ setup(
     long_description=read("README.md"),
     platforms=["Linux", "MacOS"],
     packages=find_packages(),
-    install_requires=["requests>=2.20.0"],
+    install_requires=["requests>=2.20.0", "boto3>=1.11.6"],
     entry_points={
         "console_scripts": ["request-ssh-access = request_ssh_access.__main__:main"]
     },
