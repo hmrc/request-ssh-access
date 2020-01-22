@@ -42,8 +42,8 @@ def main(args=None):
         generate_signed_cert(
             args.environment,
             args.user_name,
-            args.input_ssh_cert,
             args.ttl,
+            args.input_ssh_cert,
             get_output_cert_path(args),
         )
     except Exception as e:
@@ -54,8 +54,8 @@ def main(args=None):
 def generate_signed_cert(
     environment,
     username,
-    input_ssh_cert,
     ttl=60 * 60 * 4,
+    input_ssh_cert=config.DEFAULT_PUBKEY_PATH,
     output_ssh_cert=config.DEFAULT_CERT_PATH,
 ):
     if ttl > config.MAX_TTL:
@@ -219,7 +219,7 @@ def parse_args(argv):
         ),
         default=config.DEFAULT_PUBKEY_PATH,
         type=str,
-        required=True,
+        required=False,
     )
 
     parser.add_argument(
