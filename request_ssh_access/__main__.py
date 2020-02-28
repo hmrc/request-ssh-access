@@ -42,6 +42,7 @@ def main(args=None):
         generate_signed_cert(
             args.environment,
             args.user_name,
+            args.aws_vault,
             args.ttl,
             args.input_ssh_cert,
             get_output_cert_path(args),
@@ -54,6 +55,7 @@ def main(args=None):
 def generate_signed_cert(
     environment,
     username,
+    using_awsvault,
     ttl=60 * 60 * 4,
     input_ssh_cert=config.DEFAULT_PUBKEY_PATH,
     output_ssh_cert=config.DEFAULT_CERT_PATH,
@@ -69,7 +71,9 @@ def generate_signed_cert(
 
     environment = environment.lower().strip()
     if environment not in PRODUCTION_ENVS:
-        wrapped_token = invoke_grant_ssh_access(username, environment, ttl)
+        wrapped_token = invoke_grant_ssh_access(
+            username, environment, ttl, using_awsvault
+        )
     else:
         print_lambda_command_to_copy(username, environment, ttl)
 
@@ -144,7 +148,10 @@ def write_cert_to_file(output_ssh_cert, unwrapped_cert):
     print("signed certificate written to '{}'.".format(output_ssh_cert))
 
 
-def invoke_grant_ssh_access(username, environment, ttl):
+def invoke_grant_ssh_access(username, environment, ttl, using_awsvault):
+
+    if not using_awsvault:
+        boto3.setup_default_session(profile_name="webops-users")
 
     sts_connection = boto3.client("sts")
     account_id = sts_connection.get_caller_identity()["Account"]
@@ -234,6 +241,12 @@ def parse_args(argv):
         type=int,
         required=False,
         default=config.DEFAULT_TTL,
+    )
+
+    parser.add_argument(
+        "--aws-vault",
+        help="Flag to set if you are using aws-vault",
+        action="store_true",
     )
 
     args = parser.parse_args(argv)
