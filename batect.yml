@@ -1,0 +1,72 @@
+project_name: request-ssh-access
+
+# https://batect.dev/config/Overview.html#anchors-aliases-extensions-and-merging
+.aws-environment-variables: &aws-environment-variables
+  AWS_ACCESS_KEY_ID: $AWS_ACCESS_KEY_ID
+  AWS_SECRET_ACCESS_KEY: $AWS_SECRET_ACCESS_KEY
+  AWS_SESSION_TOKEN: $AWS_SESSION_TOKEN
+  AWS_SECURITY_TOKEN: $AWS_SECURITY_TOKEN
+  AWS_SESSION_EXPIRATION: $AWS_SESSION_EXPIRATION
+  AWS_REGION: $AWS_REGION
+  AWS_DEFAULT_REGION: $AWS_DEFAULT_REGION
+  AWS_VAULT: $AWS_VAULT
+
+config_variables:
+  container_user_home_directory:
+    description: The home directory to use for the user inside a container
+    default: /home/container-user
+  environment:
+    description: The environment you require a signed certificate for
+  input_ssh_cert:
+    description: The SSH key you want to sign
+  user_name:
+    description: Your HMRC AWS user name
+
+containers:
+  request-ssh-access: &request-ssh-template
+    build_directory: .
+    dockerfile: .batect/request-ssh-access/Dockerfile
+    run_as_current_user:
+      enabled: true
+      home_directory: /home/container-user
+    environment:
+      *aws-environment-variables
+    volumes:
+      - local: ${HOME}/.aws
+        container: /home/container-user/.aws
+        options: cached
+      - local: ${HOME}/.ssh
+        container: /home/container-user/.ssh
+        options: cached
+
+  request-ssh-access-dev:
+    <<: *request-ssh-template
+    dockerfile: .batect/request-ssh-access-dev/Dockerfile
+    volumes:
+      - local: .
+        container: /src
+        options: cached
+
+tasks:
+  shell:
+    description: Start shell in request-ssh-access container
+    run:
+      container: request-ssh-access
+      command: bash
+
+  shell-dev:
+    description: Start shell in request-ssh-access development container
+    run:
+      container: request-ssh-access-dev
+      command: bash
+
+  sign:
+    description: Generate a signed SSH certificate
+    run:
+      container: request-ssh-access
+      environment:
+        INPUT_CERT: <{input_ssh_cert}
+        USER_NAME: <{user_name}
+        ENVIRONMENT: <{environment}
+      command: "'request-ssh-access --input-ssh-cert /home/container-user/.ssh/${INPUT_CERT} --user $USER_NAME --environment ${ENVIRONMENT}'"
+      entrypoint: /bin/bash -c

@@ -39,6 +39,29 @@ will result in a default value of `~/.ssh/id_rsa-cert.pub`.
 ###### `--ttl`
 Optional TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour.
 
+#### batect
+
+`request-ssh-access` can be easily run in a container via batect.
+
+batect will mount your `~/.ssh` and `~/.aws` directories in the container and
+requires you to set three config variables:
+
+config variable | description
+----------------|--------------------------------------
+input_ssh_cert  | File name of your SSH key in `~/.ssh`
+user_name       | Your AWS user name
+environment     | The environment you want access to
+
+Config variables can be set in a file or at the command line - https://batect.dev/docs/reference/config/config-variables#values
+```bash
+
+./batect \
+  --config-var input_ssh_cert=key.pub \
+  --config-var user_name=aws.username \
+  --config-var environment=integration \
+  sign
+```
+
 ### Logging in
 To log in with a signed certificate, you must have SSH configured to use your
 key *and* the associated signed certificate.

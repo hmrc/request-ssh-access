@@ -1,0 +1,8 @@
+.batect/
+.idea/
+.tox/
+batect
+batect.yml
+repository.yaml
+request_ssh_access.egg-info/
+target/
