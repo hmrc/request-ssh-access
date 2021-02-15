@@ -61,7 +61,8 @@ def generate_signed_cert(
     if ttl > config.MAX_TTL:
         max_ttl_message = (
             bcolors.FAIL
-            + f"FAILED: The TTL requested is greater than MAX_TTL which is set {config.MAX_TTL}\n"
+            + "FAILED: The TTL requested is greater than MAX_TTL which is set"
+            + f" {config.MAX_TTL}\n"
             + bcolors.ENDC
         )
         raise Exception(max_ttl_message)
@@ -74,7 +75,8 @@ def generate_signed_cert(
 
         wrapped_token = get_input(
             bcolors.PROMPT
-            + "Enter the Vault wrapped token you received back from the authorised user: "
+            + "Enter the Vault wrapped token you received back from the authorised"
+            + " user: "
             + bcolors.ENDC
         )
         wrapped_token = wrapped_token.strip(" '\"")
@@ -97,7 +99,8 @@ def generate_signed_cert(
         'ssh -o "IdentityAgent none" -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
             input_ssh_cert, output_ssh_cert
         ),
-        "\nor add the following to the appropriate Hosts section in your ~/.ssh/confg\n",
+        "\nor add the following to the appropriate Hosts section in your"
+        + " ~/.ssh/confg\n",
         "\n\tUser {}".format(username),
         "\n\tIdentitiesOnly yes",
         "\n\tIdentityFile {}".format(input_ssh_cert),
@@ -142,8 +145,6 @@ def write_cert_to_file(output_ssh_cert, unwrapped_cert):
 
 
 def invoke_grant_ssh_access(username, environment, ttl):
-
-    boto3.setup_default_session(profile_name="webops-users")
 
     sts_connection = boto3.client("sts")
     account_id = sts_connection.get_caller_identity()["Account"]
@@ -228,7 +229,8 @@ def parse_args(argv):
 
     parser.add_argument(
         "--ttl",
-        help="TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour",
+        help="TTL in seconds for the Vault generated ssh certificate lease which"
+        + "defaults to 1 hour",
         type=int,
         required=False,
         default=config.DEFAULT_TTL,

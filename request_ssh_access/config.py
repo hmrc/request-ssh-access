@@ -18,7 +18,7 @@ https://github.com/hmrc/grant-ssh-access/blob/master/README.md#instructions-for-
 Or if the person has AWS CLI setup, they can run the following
 
 aws --profile=platform_owner lambda invoke --function-name {function_arn} --payload "{{\\"user_name\\": \\"{user_name}\\", \\"ttl\\": \\"{ttl}\\"}}" /tmp/grant_outfile && cat /tmp/grant_outfile
-"""
+"""  # noqa: E501
 
 DEFAULT_TTL = 3600  # 1 hour
 MAX_TTL = 43200  # 12 hours
