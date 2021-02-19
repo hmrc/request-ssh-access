@@ -53,14 +53,31 @@ user_name       | Your AWS user name
 environment     | The environment you want access to
 
 Config variables can be set in a file or at the command line - https://batect.dev/docs/reference/config/config-variables#values
-```bash
 
+```bash
 ./batect \
   --config-var input_ssh_cert=key.pub \
   --config-var user_name=aws.username \
   --config-var environment=integration \
   sign
 ```
+
+You need to set relevant AWS environment variables to run the `sign` task,
+`batect` will let you know if any are missing.
+
+##### aws-vault
+
+Running the `sign` task using `batect` and `aws-vault` is as easy as:
+
+```bash
+aws-vault exec webops-users -- ./batect \
+  --config-var input_ssh_cert=key.pub \
+  --config-var user_name=aws.username \
+  --config-var environment=integration \
+  sign
+```
+
+Use the relevant name of your webops-users profile for `aws-vault`.
 
 ### Logging in
 To log in with a signed certificate, you must have SSH configured to use your
