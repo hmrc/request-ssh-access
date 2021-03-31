@@ -71,12 +71,14 @@ def test_production_happy_path_for_vault_user(
         input_ssh_cert,
         "--output-ssh-cert",
         output_ssh_cert,
-        "--aws-vault",
+        "--no-assume",
     )
 
     fake_get_input = Mock(return_value="s.wrapped_token")
     monkeypatch.setattr(main, "get_input", fake_get_input)
     monkeypatch.setattr(main.getpass, "getpass", Mock(return_value="000000"))
+    fake_setup_default_session = Mock()
+    monkeypatch.setattr(main.boto3, "setup_default_session", fake_setup_default_session)
 
     mocked_responses.add(
         mocked_responses.POST,
@@ -95,6 +97,8 @@ def test_production_happy_path_for_vault_user(
     mocked_boto3_client.return_value.invoke.return_value = {"Payload": mocked_payload}
 
     main.main(args)
+
+    assert not fake_setup_default_session.called
 
 
 @patch("request_ssh_access.__main__.boto3.client", autospec=True)
