@@ -42,6 +42,7 @@ def main(args=None):
         generate_signed_cert(
             args.environment,
             args.user_name,
+            not args.no_assume,
             args.ttl,
             args.input_ssh_cert,
             get_output_cert_path(args),
@@ -54,6 +55,7 @@ def main(args=None):
 def generate_signed_cert(
     environment,
     username,
+    assume_aws_auth_role,
     ttl=60 * 60 * 4,
     input_ssh_cert=config.DEFAULT_PUBKEY_PATH,
     output_ssh_cert=config.DEFAULT_CERT_PATH,
@@ -61,20 +63,24 @@ def generate_signed_cert(
     if ttl > config.MAX_TTL:
         max_ttl_message = (
             bcolors.FAIL
-            + f"FAILED: The TTL requested is greater than MAX_TTL which is set {config.MAX_TTL}\n"
+            + "FAILED: The TTL requested is greater than MAX_TTL which is set"
+            + f" {config.MAX_TTL}\n"
             + bcolors.ENDC
         )
         raise Exception(max_ttl_message)
 
     environment = environment.lower().strip()
     if environment not in PRODUCTION_ENVS:
-        wrapped_token = invoke_grant_ssh_access(username, environment, ttl)
+        wrapped_token = invoke_grant_ssh_access(
+            username, environment, ttl, assume_aws_auth_role
+        )
     else:
         print_lambda_command_to_copy(username, environment, ttl)
 
         wrapped_token = get_input(
             bcolors.PROMPT
-            + "Enter the Vault wrapped token you received back from the authorised user: "
+            + "Enter the Vault wrapped token you received back from the authorised"
+            + " user: "
             + bcolors.ENDC
         )
         wrapped_token = wrapped_token.strip(" '\"")
@@ -97,7 +103,8 @@ def generate_signed_cert(
         'ssh -o "IdentityAgent none" -i {} -i {} "${{REMOTE_HOST}}"\n'.format(
             input_ssh_cert, output_ssh_cert
         ),
-        "\nor add the following to the appropriate Hosts section in your ~/.ssh/confg\n",
+        "\nor add the following to the appropriate Hosts section in your"
+        + " ~/.ssh/confg\n",
         "\n\tUser {}".format(username),
         "\n\tIdentitiesOnly yes",
         "\n\tIdentityFile {}".format(input_ssh_cert),
@@ -141,9 +148,10 @@ def write_cert_to_file(output_ssh_cert, unwrapped_cert):
     print("signed certificate written to '{}'.".format(output_ssh_cert))
 
 
-def invoke_grant_ssh_access(username, environment, ttl):
+def invoke_grant_ssh_access(username, environment, ttl, assume_aws_auth_role):
 
-    boto3.setup_default_session(profile_name="webops-users")
+    if assume_aws_auth_role:
+        boto3.setup_default_session(profile_name="webops-users")
 
     sts_connection = boto3.client("sts")
     account_id = sts_connection.get_caller_identity()["Account"]
@@ -228,10 +236,17 @@ def parse_args(argv):
 
     parser.add_argument(
         "--ttl",
-        help="TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour",
+        help="TTL in seconds for the Vault generated ssh certificate lease which"
+        + "defaults to 1 hour",
         type=int,
         required=False,
         default=config.DEFAULT_TTL,
+    )
+
+    parser.add_argument(
+        "--no-assume",
+        help="Flag to set if you are using an external tool to assume AWS credentials",
+        action="store_true",
     )
 
     args = parser.parse_args(argv)

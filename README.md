@@ -12,32 +12,122 @@ A workflow helper utility to assist with requesting ssh access.
 pip install --user -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/pips/simple request-ssh-access
 ```
 
+### Overview
+`request-ssh-access` is a utility script to support the process of obtaining a
+signed SSH certificate. This script does not itself sign certificates, but wraps
+fetching a signed certificate from `vault`.
+
+`request-ssh-access` will:
+
+- In production environments
+   - Print instructions for the granting user. Copy and send the output to them.
+   - Ask for the [Vault Cubbyhole token](https://www.vaultproject.io/docs/secrets/cubbyhole/index.html)
+     from the granting user and your LDAP credentials to read the secret from
+     Vault.
+- In pre-production environments
+   - Ask for your AWS MFA token and LDAP credentials
+   - Automatically call a Lambda to generate a signed SSH certificate
+- Subsequently, in all environments:
+   - Fetch the signed certificate from the appropriate Vault server.
+   - Write the signed certificate to the correct location (based on the input
+     ssh certificate)
+   - Print a template `ssh` command which you can use to log into a remote ssh
+     host.
+
 ### Usage
 ```
 request-ssh-access --input-ssh-cert ~/path/to/ssh/key --user aws.username --environment integration --ttl (optional)
 ```
 
-- The utility will print the command for the authorised user to execute. Copy and send it to them.
-- The authorised user will execute the command and receive a [Vault Cubbyhole token](https://www.vaultproject.io/docs/secrets/cubbyhole/index.html) and will send it back to you.
-- Input the cubbyhole token and your LDAP credentials back in the utility. 
-- The utility will fetch the signed certificate from the appropriate Vault server.
-- The utility will write the signed certificate to the correct location (based on the input ssh certificate)
-- The utility will print a template `ssh` command which you can use to log into a remote ssh host.
+### Command line options:
 
-##### Command line options:
-###### `--input-ssh-cert`
-Path to the SSH key you use to sign in, default `~/.ssh/id_rsa.pub`.
+##### `--user-name=[aws-user-name]`
+(REQUIRED) The AWS username you are requesting a signed SSH certificate for.
+
+##### `--environment=[integration|development|qa|staging|externaltest|production]`
+(REQUIRED) The webops environment you are requesting a signed SSH certificate
+for.
+
+##### `--input-ssh-cert=<path to SSH key>`
+(OPTIONAL) Path to the SSH key you use to sign in, default `~/.ssh/id_rsa.pub`.
 
 When overriding this, you can specify either the private or public key and the
 utility will work out the correct path for the signed certificate.
 
-###### `--output-ssh-cert`
-Path to write signed key certificate, if not supplied the default will be based
-on the value supplied with the `--input-ssh-cert` parameter. Using the defaults
-will result in a default value of `~/.ssh/id_rsa-cert.pub`.
+##### `--output-ssh-cert=<path to write signed certificate to>`
+(OPTIONAL) Path to write signed key certificate, if not supplied the default
+will be based  on the value supplied with the `--input-ssh-cert` parameter.
+Using the defaults  will result in a default value of `~/.ssh/id_rsa-cert.pub`.
 
-###### `--ttl`
-Optional TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour.
+##### `--ttl=[certificate lifetime in seconds]`
+(OPTIONAL) TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour.
+
+##### `--no-assume`
+(OPTIONAL) Do not assume 
+
+### batect
+
+`request-ssh-access` can be easily run in a container via batect.
+
+batect will mount your `~/.ssh` and `~/.aws` directories in the container and
+requires you to set three config variables:
+
+#### Tasks
+
+##### `sign`
+
+This task runs `request-ssh-access` in a container to generate a signed SSH
+certificate.
+
+config variable | description
+----------------|--------------------------------------
+input_ssh_cert  | File name of your SSH key in `~/.ssh`
+user_name       | Your AWS user name
+environment     | The environment you want access to
+
+Config variables can be set in a file or at the command line - https://batect.dev/docs/reference/config/config-variables#values
+
+```bash
+./batect \
+  --config-var input_ssh_cert=key.pub \
+  --config-var user_name=aws.username \
+  --config-var environment=integration \
+  sign
+```
+
+You need to set relevant AWS environment variables to run the `sign` task,
+`batect` will let you know if any are missing.
+
+##### `certificate-info`
+
+This task outputs details about a signed SSH certificate, so you can check its
+validity and other details.
+
+config variable         | description
+------------------------|-----------------------------------------------------
+output_ssh_signed_cert  | File name of your signed SSH certificate in `~/.ssh`
+
+Config variables can be set in a file or at the command line - https://batect.dev/docs/reference/config/config-variables#values
+
+```bash
+./batect \
+  --config-var output_ssh_signed_cert=key-cert.pub \
+  certificate-info
+```
+
+#### aws-vault
+
+Running the `sign` task using `batect` and `aws-vault` is as easy as:
+
+```bash
+aws-vault exec webops-users -- ./batect \
+  --config-var input_ssh_cert=key.pub \
+  --config-var user_name=aws.username \
+  --config-var environment=integration \
+  sign
+```
+
+Use the relevant name of your webops-users profile for `aws-vault`.
 
 ### Logging in
 To log in with a signed certificate, you must have SSH configured to use your
