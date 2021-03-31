@@ -19,6 +19,8 @@ config_variables:
     description: The environment you require a signed certificate for
   input_ssh_cert:
     description: The SSH key you want to sign
+  output_ssh_signed_cert:
+    description: The SSH signed certificate file
   user_name:
     description: Your HMRC AWS user name
 
@@ -47,6 +49,16 @@ containers:
         container: /src
         options: cached
 
+  openssh:
+    build_directory: .batect/ssh-keygen
+    run_as_current_user:
+      enabled: true
+      home_directory: /home/container-user
+    volumes:
+      - local: ${HOME}/.ssh
+        container: /home/container-user/.ssh
+        options: cached
+
 tasks:
   shell:
     description: Start shell in request-ssh-access container
@@ -60,6 +72,14 @@ tasks:
       container: request-ssh-access-dev
       command: bash
 
+  check-ssh-cert:
+    description: Check your signed SSH certificate
+    run:
+      container: openssh
+      environment:
+        OUTPUT_SIGNED_CERT: <{output_ssh_signed_cert}
+      command: "sh -c 'ssh-keygen -L -f /home/container-user/.ssh/${OUTPUT_SIGNED_CERT}'"
+
   sign:
     description: Generate a signed SSH certificate
     run:
@@ -68,5 +88,5 @@ tasks:
         INPUT_CERT: <{input_ssh_cert}
         USER_NAME: <{user_name}
         ENVIRONMENT: <{environment}
-      command: "'request-ssh-access --input-ssh-cert /home/container-user/.ssh/${INPUT_CERT} --user $USER_NAME --environment ${ENVIRONMENT}'"
+      command: "'request-ssh-access --no-assume --input-ssh-cert /home/container-user/.ssh/${INPUT_CERT} --user $USER_NAME --environment ${ENVIRONMENT}'"
       entrypoint: /bin/bash -c
