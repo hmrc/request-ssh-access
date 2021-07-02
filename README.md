@@ -13,13 +13,14 @@ pip install --user -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/
 ```
 
 ### Usage
+Prepend the following with your favourite profile manager, e.g. `aws-profile -p webops-users` or `aws-vault exec webops-users --`.
 ```
 request-ssh-access --input-ssh-cert ~/path/to/ssh/key --user aws.username --environment integration --ttl (optional)
 ```
 
 - The utility will print the command for the authorised user to execute. Copy and send it to them.
 - The authorised user will execute the command and receive a [Vault Cubbyhole token](https://www.vaultproject.io/docs/secrets/cubbyhole/index.html) and will send it back to you.
-- Input the cubbyhole token and your LDAP credentials back in the utility. 
+- Input the cubbyhole token and your LDAP credentials back in the utility.
 - The utility will fetch the signed certificate from the appropriate Vault server.
 - The utility will write the signed certificate to the correct location (based on the input ssh certificate)
 - The utility will print a template `ssh` command which you can use to log into a remote ssh host.
@@ -60,11 +61,11 @@ appropriate changes to the commands.
    certificate when using this key.
    ```
    ssh -i ~/.ssh/id_rsa.pub user.name@host
-   ``` 
+   ```
 1. Configure SSH to use the correct key and user name when connecting to a
    host, e.g. if your key is `~/.ssh/id_rsa.pub` and your username is
    `user.name` add the following to the relevant `Host` section in your
-   `~/.ssh/config` file  
+   `~/.ssh/config` file
    ```
    User user.name
    IdentityFile ~/.ssh/id_rsa
@@ -101,7 +102,7 @@ This can be controlled in a couple of ways.
    IdentityFile ~/.ssh/id_rsa
    ```
    This will continue allowing use of `ssh-agent`, but only use keys named using
-   `IdentityFile`, or specified on the command line.   
+   `IdentityFile`, or specified on the command line.
 
 ### Development environment
 1. Install tox

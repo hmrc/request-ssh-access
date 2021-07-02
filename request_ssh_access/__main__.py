@@ -107,7 +107,7 @@ def generate_signed_cert(
 
 
 def get_input(prompt=""):
-    """ this is here so input() could be mocked """
+    """this is here so input() could be mocked"""
     return input(prompt)
 
 
@@ -142,8 +142,6 @@ def write_cert_to_file(output_ssh_cert, unwrapped_cert):
 
 
 def invoke_grant_ssh_access(username, environment, ttl):
-
-    boto3.setup_default_session(profile_name="webops-users")
 
     sts_connection = boto3.client("sts")
     account_id = sts_connection.get_caller_identity()["Account"]
@@ -228,7 +226,7 @@ def parse_args(argv):
 
     parser.add_argument(
         "--ttl",
-        help="TTL in seconds for the Vault generated ssh certificate lease which defaults to 1 hour",
+        help="TTL in seconds for the Vault generated ssh certificate lease, default 1 hour",
         type=int,
         required=False,
         default=config.DEFAULT_TTL,
