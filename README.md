@@ -86,6 +86,9 @@ are expecting.
 
 This can be controlled in a couple of ways.
 
+1. Check if you have more than 1 ssh key in aws IAM
+   [currently only the first key will be used](https://github.com/hmrc/grant-ssh-access/blob/77aa00aac00556a3811898343ca779fc3a8019aa/grant_ssh_access.py#L84)
+
 1. Disable use of SSH agent for this connection, by either:
    1. Unset the `unset SSH_AUTH_SOCK` environment variable so SSH cannot
       locate the running agent.
@@ -103,6 +106,14 @@ This can be controlled in a couple of ways.
    ```
    This will continue allowing use of `ssh-agent`, but only use keys named using
    `IdentityFile`, or specified on the command line.
+1. Some linux distributions are phasing out `ssh+rsa` keys in favor of `ED25519` however this is not yet supported by AWS
+   if you are getting an error in verbose mode such as `no mutual signature algorithm` 
+   then add the following lines to your `~/.ssh/config`
+   ```ssh
+   PubkeyAcceptedKeyTypes +ssh-rsa
+   ```
+1. If you are getting the error `Load key "./my-key.pub": invalid format`
+   you are using your public key. Please use your private key in the `-i` flag
 
 ### Development environment
 1. Install tox
