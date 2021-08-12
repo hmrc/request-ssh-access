@@ -4,7 +4,7 @@ A workflow helper utility to assist with requesting ssh access.
 
 
 ### Requirements
-- Python 3.7
+- Python 3.9
 - [AWS CLI](https://aws.amazon.com/cli/) (required in order to execute the `aws lambda invoke` command)
 
 ### Installation
@@ -116,28 +116,41 @@ This can be controlled in a couple of ways.
    you are using your public key. Please use your private key in the `-i` flag
 
 ### Development environment
-1. Install tox
-```
-pip install tox pre-commit
-```
 
-2. Clone the repository
-```
-git clone git@github.com:hmrc/request-ssh-access.git
-cd request-ssh-access
-```
+1. Install pipenv
 
-3. To run linters and tests
-```
-tox
-```
+   ```bash
+   pip3 install pipenv pre-commit
+   ```
 
-4. To run formatter
-```
-tox -e black
-```
+1. Clone the repository
+
+   ```bash
+   git clone git@github.com:hmrc/request-ssh-access.git
+   cd request-ssh-access
+   ```
+
+1. Remove old virtual environment and install all dependencies
+
+   ```bash
+   pipenv --rm
+   pipenv install
+   ```
+
+1. To run linters and tests
+
+   ```bash
+   pipenv run tox
+   ```
+
+1. To run formatter
+
+   ```bash
+   pipenv run tox -e black
+   ```
 
 ### Releasing to artifactory
+
 Each push to `master` will trigger a job in [build](https://build.tax.service.gov.uk/job/platform-security/job/request-ssh-access/) which will run tests, upload the package to artefacts.tax.service.gov.uk, and create a release in this repo.
 
 ### License
