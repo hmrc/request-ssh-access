@@ -246,3 +246,23 @@ def test_exception_raised(tmp_path):
 
     with pytest.raises(SystemExit):
         main.main(parsed_args)
+
+
+@patch("request_ssh_access.__main__.boto3.client", autospec=True)
+def test_invoke_grant_ssh_access_invalid_response_from_lambda_raises_exception(
+    mocked_boto3_client, monkeypatch
+):
+
+    fake_get_input = Mock(return_value="s.wrapped_token")
+    monkeypatch.setattr(main, "get_input", fake_get_input)
+    monkeypatch.setattr(main.getpass, "getpass", Mock(return_value="000000"))
+    monkeypatch.setattr(main.boto3, "setup_default_session", Mock())
+
+    mocked_payload = Mock()
+    mocked_payload.read.return_value = (
+        '{"error": "an error occurred", "stacktrace": "..."}'
+    )
+    mocked_boto3_client.return_value.invoke.return_value = {"Payload": mocked_payload}
+
+    with pytest.raises(Exception, match=r"Invalid response from lambda: .+"):
+        main.invoke_grant_ssh_access("username", "integration", "90")
