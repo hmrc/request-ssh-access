@@ -177,7 +177,13 @@ def invoke_grant_ssh_access(username, environment, ttl):
         Payload=json.dumps({"user_name": username, "ttl": ttl}),
     )
 
-    return json.loads(response["Payload"].read()).get("token")
+    payload = json.loads(response["Payload"].read())
+
+    token = payload.get("token")
+    if "error" in payload or token is None:
+        raise Exception(f"Invalid response from lambda: {payload}")
+
+    return token
 
 
 def yes_or_no(question):
