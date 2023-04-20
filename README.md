@@ -8,9 +8,8 @@ A workflow helper utility to assist with requesting ssh access.
 - [AWS CLI](https://aws.amazon.com/cli/) (required in order to execute the `aws lambda invoke` command)
 
 ### Installation
-```bash
-pip install --user -i https://artefacts.tax.service.gov.uk/artifactory/api/pypi/pips/simple request-ssh-access
-```
+
+Clone the repo and install locally with `pip install .`. 
 
 ### Usage
 Prepend the following with your favourite profile manager, e.g. `aws-profile -p webops-users` or `aws-vault exec webops-users --`.
