@@ -12,7 +12,7 @@ def read(filename):
 setup(
     name="request-ssh-access",
     author="HRMC Platform Security",
-    author_email="platsec.monitor@digital.hmrc.gov.uk",
+    author_email="",
     version=read(".version"),
     description="Helper utility to create Vault-signed SSH certificates",
     url="https://github.com/hmrc/request-ssh-access/",
